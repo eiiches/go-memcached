@@ -1,0 +1,202 @@
+commands:
+  add:
+    has_expire: true
+    has_cas: true
+    has_value: true
+  replace:
+    has_expire: true
+    has_cas: true
+    has_value: true
+  get:
+    has_expire: false
+    has_cas: false
+    has_value: false
+  increment:
+    has_expire: true
+    has_cas: true
+    has_value: true
+  decrement:
+    has_expire: true
+    has_cas: true
+    has_value: true
+  set:
+    has_expire: true
+    has_cas: true
+    has_value: true
+  delete:
+    has_expire: false
+    has_cas: true
+    has_value: false
+  append:
+    has_expire: true
+    has_cas: true
+    has_value: true
+  prepend:
+    has_expire: true
+    has_cas: true
+    has_value: true
+
+binary_commands:
+  - name: Get
+    opcode: 0x00
+    request:
+      has_extras: false
+      has_key: true
+      has_value: false
+      has_cas: false
+  - name: Set
+    opcode: 0x01
+    request:
+      has_key: true
+      has_value: true
+      has_expire:
+        offset: 0x04
+      has_cas: true
+      has_magic:
+        offset: 0x00
+  - name: Add
+    opcode: 0x02
+    request:
+      has_key: true
+      has_value: true
+      has_expire:
+        offset: 0x04
+      has_cas: true
+      has_magic:
+        offset: 0x00
+  - name: Replace
+    opcode: 0x03
+    request:
+      has_key: true
+      has_value: true
+      has_expire:
+        offset: 0x04
+      has_cas: true
+      has_magic:
+        offset: 0x00
+  - name: Delete
+    opcode: 0x04
+    request:
+      has_key: true
+  - name: Increment
+    opcode: 0x05
+    request:
+      has_key: true
+  - name: Decrement
+    opcode: 0x06
+    request:
+      has_key: true
+  - name: Quit
+    opcode: 0x07
+  - name: Flush
+    opcode: 0x08
+  - name: GetQ
+    opcode: 0x09
+    request:
+      has_extras: false
+      has_key: true
+      has_value: false
+      command:
+        name: Get
+        options:
+          with_quiet: true
+  - name: Nop
+    opcode: 0x0A
+  - name: Version
+    opcode: 0x0B
+  - name: GetK
+    opcode: 0x0C
+    request:
+      has_key: true
+  - name: GetKQ
+    opcode: 0x0D
+    request:
+      has_key: true
+  - name: Append
+    opcode: 0x0E
+    request:
+      has_key: true
+  - name: Prepend
+    opcode: 0x0F
+    request:
+      has_key: true
+  - name: Stat
+    opcode: 0x10
+  - name: SetQ
+    opcode: 0x11
+    request:
+      has_key: true
+      command:
+        name: Set
+        options:
+          with_quiet: true
+  - name: AddQ
+    opcode: 0x12
+    request:
+      has_key: true
+      command:
+        name: Add
+        options:
+          with_quiet: true
+  - name: ReplaceQ
+    opcode: 0x13
+    request:
+      has_key: true
+      command:
+        name: Replace
+        options:
+          with_quiet: true
+  - name: DeleteQ
+    opcode: 0x14
+    request:
+      has_key: true
+      command:
+        name: Delete
+        options:
+          with_quiet: true
+  - name: IncrementQ
+    opcode: 0x15
+    request:
+      has_key: true
+      command:
+        name: Increment
+        options:
+          with_quiet: true
+  - name: DecrementQ
+    opcode: 0x16
+    request:
+      has_key: true
+      command:
+        name: Decrement
+        options:
+          with_quiet: true
+  - name: QuitQ
+    opcode: 0x17
+    request:
+      command:
+        name: Quit
+        options:
+          with_quiet: true
+  - name: FlushQ
+    opcode: 0x18
+    request:
+      command:
+        name: Flush
+        options:
+          with_quiet: true
+  - name: AppendQ
+    opcode: 0x19
+    request:
+      has_key: true
+      command:
+        name: Append
+        options:
+          with_quiet: true
+  - name: PrependQ
+    opcode: 0x1A
+    request:
+      has_key: true
+      command:
+        name: Prepend
+        options:
+          with_quiet: true

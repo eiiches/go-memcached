@@ -1,0 +1,54 @@
+// +build !generate
+
+package memcached
+
+{{range $name, $options := .commands}}
+
+type {{$name}}Command struct {
+	key    []byte
+{{if $options.has_value}}	value  []byte{{end}}
+{{if $options.has_expire}}	expire uint32{{end}}
+{{if $options.has_cas}}	cas    uint64{{end}}
+}
+
+func {{$name | toCapitalCase}}(key []byte{{if $options.has_value}}, value []byte{{end}}) *{{$name}}Command {
+	return &{{$name}}Command{
+		key:   key,
+{{if $options.has_value}}		value: value,{{end}}
+	}
+}
+
+{{if $options.has_expire}}
+func (self *{{$name}}Command) WithExpire(expire uint32) *{{$name}}Command {
+	self.expire = expire
+	return self
+}
+{{end}}
+{{if $options.has_cas}}
+func (self *{{$name}}Command) WithCas(cas uint64) *{{$name}}Command {
+	self.cas = cas
+	return self
+}
+{{end}}
+{{end}}
+
+type serverCommand interface {
+	execute(server *MemcachedServer)
+}
+
+func (self setCommand) execute(server *MemcachedServer) {
+	if self.cas != 0 {
+		server.cache.CompareAndSet(self.key, self.value, self.cas, self.expire)
+	} else {
+		server.cache.Put(self.key, self.value, self.expire)
+	}
+}
+
+func (self addCommand) execute(server *MemcachedServer) {
+}
+
+func (self getCommand) execute(server *MemcachedServer) {
+}
+
+func (self replaceCommand) execute(server *MemcachedServer) {
+}

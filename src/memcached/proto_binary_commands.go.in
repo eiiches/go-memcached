@@ -1,0 +1,36 @@
+// +build !generate
+
+package memcached
+
+import "fmt"
+import "encoding/binary"
+
+type parseFunc func(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error)
+
+func parseFuncTable() []parseFunc {
+	return []parseFunc{
+{{range $command := .binary_commands}}		parse{{$command.name}}, // {{$command.opcode}}
+{{end}}	}
+}
+
+{{range $command := .binary_commands}}
+func parse{{$command.name}}(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+	if len(key) {{if $command.request.has_key}}=={{else}}>{{end}} 0 {
+		return nil, fmt.Errorf({{if $command.request.has_key}}"{{$command.name}} MUST have key"{{else}}"{{$command.name}} MUST NOT have key"{{end}})
+	}
+	if len(value) {{if $command.request.has_value}}=={{else}}>{{end}} 0 {
+		return nil, fmt.Errorf({{if $command.request.has_value}}"{{$command.name}} MUST have value"{{else}}"{{$command.name}} MUST NOT have value"{{end}})
+	}
+{{if $command.request.has_magic}}	if binary.BigEndian.Uint32(extras[{{$command.request.has_magic.offset}}:]) != MAGIC_DEADBEEF {
+		return nil, fmt.Errorf("Invalid magic for {{$command.name}}")
+	}{{end}}
+
+	command := {{or $command.request.command.name $command.name}}({{if $command.request.has_key}}key{{if $command.request.has_value}}, value{{end}}{{end}})
+{{if $command.request.has_expire}}	command.WithExpire(binary.BigEndian.Uint32(extras[{{$command.request.has_expire.offset}}:])){{end}}
+{{if $command.request.has_cas}}	command.WithCas(header.cas){{end}}
+{{range $key, $value := $command.request.command.options}}
+	command.{{$key | snakeToUpperCamel}}({{$value}})
+{{end}}
+	return command, nil
+}
+{{end}}
