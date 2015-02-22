@@ -2,30 +2,30 @@
 
 package memcached
 
-{{range $name, $options := .commands}}
+{{range $command := .commands}}
 
-type {{$name}}Command struct {
+type {{$command.name}}Command struct {
 	key    []byte
-{{if $options.has_value}}	value  []byte{{end}}
-{{if $options.has_expire}}	expire uint32{{end}}
-{{if $options.has_cas}}	cas    uint64{{end}}
+{{if $command.has_value}}	value  []byte{{end}}
+{{if $command.has_expire}}	expire uint32{{end}}
+{{if $command.has_cas}}	cas    uint64{{end}}
 }
 
-func {{$name | toCapitalCase}}(key []byte{{if $options.has_value}}, value []byte{{end}}) *{{$name}}Command {
-	return &{{$name}}Command{
+func {{$command.name | snakeToUpperCamel}}(key []byte{{if $command.has_value}}, value []byte{{end}}) *{{$command.name}}Command {
+	return &{{$command.name}}Command{
 		key:   key,
-{{if $options.has_value}}		value: value,{{end}}
+{{if $command.has_value}}		value: value,{{end}}
 	}
 }
 
-{{if $options.has_expire}}
-func (self *{{$name}}Command) WithExpire(expire uint32) *{{$name}}Command {
+{{if $command.has_expire}}
+func (self *{{$command.name}}Command) WithExpire(expire uint32) *{{$command.name}}Command {
 	self.expire = expire
 	return self
 }
 {{end}}
-{{if $options.has_cas}}
-func (self *{{$name}}Command) WithCas(cas uint64) *{{$name}}Command {
+{{if $command.has_cas}}
+func (self *{{$command.name}}Command) WithCas(cas uint64) *{{$command.name}}Command {
 	self.cas = cas
 	return self
 }

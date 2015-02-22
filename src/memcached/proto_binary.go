@@ -37,7 +37,7 @@ func (header *binaryRequestHeader) parse(buf []byte) {
 }
 
 type binaryProtocolHandler struct {
-	parsers []parseFunc
+	parsers []parseRequestFunc
 }
 
 func (self binaryProtocolHandler) handleConnection(conn net.Conn, server *MemcachedServer) error {
@@ -81,6 +81,6 @@ func (self binaryProtocolHandler) handleConnection(conn net.Conn, server *Memcac
 
 func newBinaryProtocolHandler() protocolHandler {
 	return &binaryProtocolHandler{
-		parsers: parseFuncTable(),
+		parsers: parseRequestFuncTable(),
 	}
 }

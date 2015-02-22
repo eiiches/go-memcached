@@ -1,37 +1,37 @@
 commands:
-  add:
+  - name: add
     has_expire: true
     has_cas: true
     has_value: true
-  replace:
+  - name: replace
     has_expire: true
     has_cas: true
     has_value: true
-  get:
+  - name: get
     has_expire: false
     has_cas: false
     has_value: false
-  increment:
+  - name: increment
     has_expire: true
     has_cas: true
     has_value: true
-  decrement:
+  - name: decrement
     has_expire: true
     has_cas: true
     has_value: true
-  set:
+  - name: set
     has_expire: true
     has_cas: true
     has_value: true
-  delete:
+  - name: delete
     has_expire: false
     has_cas: true
     has_value: false
-  append:
+  - name: append
     has_expire: true
     has_cas: true
     has_value: true
-  prepend:
+  - name: prepend
     has_expire: true
     has_cas: true
     has_value: true
@@ -78,6 +78,7 @@ binary_commands:
     opcode: 0x04
     request:
       has_key: true
+      has_cas: true
   - name: Increment
     opcode: 0x05
     request:

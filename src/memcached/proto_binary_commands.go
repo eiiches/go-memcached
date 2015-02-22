@@ -8,42 +8,42 @@ package memcached
 import "fmt"
 import "encoding/binary"
 
-type parseFunc func(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error)
+type parseRequestFunc func(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error)
 
-func parseFuncTable() []parseFunc {
-	return []parseFunc{
-		parseGet, // 0
-		parseSet, // 1
-		parseAdd, // 2
-		parseReplace, // 3
-		parseDelete, // 4
-		parseIncrement, // 5
-		parseDecrement, // 6
-		parseQuit, // 7
-		parseFlush, // 8
-		parseGetQ, // 9
-		parseNop, // 10
-		parseVersion, // 11
-		parseGetK, // 12
-		parseGetKQ, // 13
-		parseAppend, // 14
-		parsePrepend, // 15
-		parseStat, // 16
-		parseSetQ, // 17
-		parseAddQ, // 18
-		parseReplaceQ, // 19
-		parseDeleteQ, // 20
-		parseIncrementQ, // 21
-		parseDecrementQ, // 22
-		parseQuitQ, // 23
-		parseFlushQ, // 24
-		parseAppendQ, // 25
-		parsePrependQ, // 26
+func parseRequestFuncTable() []parseRequestFunc {
+	return []parseRequestFunc{
+		parseGetRequest, // 0
+		parseSetRequest, // 1
+		parseAddRequest, // 2
+		parseReplaceRequest, // 3
+		parseDeleteRequest, // 4
+		parseIncrementRequest, // 5
+		parseDecrementRequest, // 6
+		parseQuitRequest, // 7
+		parseFlushRequest, // 8
+		parseGetQRequest, // 9
+		parseNopRequest, // 10
+		parseVersionRequest, // 11
+		parseGetKRequest, // 12
+		parseGetKQRequest, // 13
+		parseAppendRequest, // 14
+		parsePrependRequest, // 15
+		parseStatRequest, // 16
+		parseSetQRequest, // 17
+		parseAddQRequest, // 18
+		parseReplaceQRequest, // 19
+		parseDeleteQRequest, // 20
+		parseIncrementQRequest, // 21
+		parseDecrementQRequest, // 22
+		parseQuitQRequest, // 23
+		parseFlushQRequest, // 24
+		parseAppendQRequest, // 25
+		parsePrependQRequest, // 26
 	}
 }
 
 
-func parseGet(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func parseGetRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("Get MUST have key")
 	}
@@ -59,7 +59,7 @@ func parseGet(header *binaryRequestHeader, key []byte, value []byte, extras []by
 	return command, nil
 }
 
-func parseSet(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func parseSetRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("Set MUST have key")
 	}
@@ -77,7 +77,7 @@ func parseSet(header *binaryRequestHeader, key []byte, value []byte, extras []by
 	return command, nil
 }
 
-func parseAdd(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func parseAddRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("Add MUST have key")
 	}
@@ -95,7 +95,7 @@ func parseAdd(header *binaryRequestHeader, key []byte, value []byte, extras []by
 	return command, nil
 }
 
-func parseReplace(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func parseReplaceRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("Replace MUST have key")
 	}
@@ -113,7 +113,7 @@ func parseReplace(header *binaryRequestHeader, key []byte, value []byte, extras 
 	return command, nil
 }
 
-func parseDelete(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func parseDeleteRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("Delete MUST have key")
 	}
@@ -124,12 +124,12 @@ func parseDelete(header *binaryRequestHeader, key []byte, value []byte, extras [
 
 	command := Delete(key)
 
-
+	command.WithCas(header.cas)
 
 	return command, nil
 }
 
-func parseIncrement(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func parseIncrementRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("Increment MUST have key")
 	}
@@ -145,7 +145,7 @@ func parseIncrement(header *binaryRequestHeader, key []byte, value []byte, extra
 	return command, nil
 }
 
-func parseDecrement(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func parseDecrementRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("Decrement MUST have key")
 	}
@@ -161,7 +161,7 @@ func parseDecrement(header *binaryRequestHeader, key []byte, value []byte, extra
 	return command, nil
 }
 
-func parseQuit(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func parseQuitRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) > 0 {
 		return nil, fmt.Errorf("Quit MUST NOT have key")
 	}
@@ -177,7 +177,7 @@ func parseQuit(header *binaryRequestHeader, key []byte, value []byte, extras []b
 	return command, nil
 }
 
-func parseFlush(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func parseFlushRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) > 0 {
 		return nil, fmt.Errorf("Flush MUST NOT have key")
 	}
@@ -193,7 +193,7 @@ func parseFlush(header *binaryRequestHeader, key []byte, value []byte, extras []
 	return command, nil
 }
 
-func parseGetQ(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func parseGetQRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("GetQ MUST have key")
 	}
@@ -211,7 +211,7 @@ func parseGetQ(header *binaryRequestHeader, key []byte, value []byte, extras []b
 	return command, nil
 }
 
-func parseNop(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func parseNopRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) > 0 {
 		return nil, fmt.Errorf("Nop MUST NOT have key")
 	}
@@ -227,7 +227,7 @@ func parseNop(header *binaryRequestHeader, key []byte, value []byte, extras []by
 	return command, nil
 }
 
-func parseVersion(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func parseVersionRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) > 0 {
 		return nil, fmt.Errorf("Version MUST NOT have key")
 	}
@@ -243,7 +243,7 @@ func parseVersion(header *binaryRequestHeader, key []byte, value []byte, extras 
 	return command, nil
 }
 
-func parseGetK(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func parseGetKRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("GetK MUST have key")
 	}
@@ -259,7 +259,7 @@ func parseGetK(header *binaryRequestHeader, key []byte, value []byte, extras []b
 	return command, nil
 }
 
-func parseGetKQ(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func parseGetKQRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("GetKQ MUST have key")
 	}
@@ -275,7 +275,7 @@ func parseGetKQ(header *binaryRequestHeader, key []byte, value []byte, extras []
 	return command, nil
 }
 
-func parseAppend(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func parseAppendRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("Append MUST have key")
 	}
@@ -291,7 +291,7 @@ func parseAppend(header *binaryRequestHeader, key []byte, value []byte, extras [
 	return command, nil
 }
 
-func parsePrepend(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func parsePrependRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("Prepend MUST have key")
 	}
@@ -307,7 +307,7 @@ func parsePrepend(header *binaryRequestHeader, key []byte, value []byte, extras 
 	return command, nil
 }
 
-func parseStat(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func parseStatRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) > 0 {
 		return nil, fmt.Errorf("Stat MUST NOT have key")
 	}
@@ -323,7 +323,7 @@ func parseStat(header *binaryRequestHeader, key []byte, value []byte, extras []b
 	return command, nil
 }
 
-func parseSetQ(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func parseSetQRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("SetQ MUST have key")
 	}
@@ -341,7 +341,7 @@ func parseSetQ(header *binaryRequestHeader, key []byte, value []byte, extras []b
 	return command, nil
 }
 
-func parseAddQ(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func parseAddQRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("AddQ MUST have key")
 	}
@@ -359,7 +359,7 @@ func parseAddQ(header *binaryRequestHeader, key []byte, value []byte, extras []b
 	return command, nil
 }
 
-func parseReplaceQ(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func parseReplaceQRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("ReplaceQ MUST have key")
 	}
@@ -377,7 +377,7 @@ func parseReplaceQ(header *binaryRequestHeader, key []byte, value []byte, extras
 	return command, nil
 }
 
-func parseDeleteQ(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func parseDeleteQRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("DeleteQ MUST have key")
 	}
@@ -395,7 +395,7 @@ func parseDeleteQ(header *binaryRequestHeader, key []byte, value []byte, extras 
 	return command, nil
 }
 
-func parseIncrementQ(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func parseIncrementQRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("IncrementQ MUST have key")
 	}
@@ -413,7 +413,7 @@ func parseIncrementQ(header *binaryRequestHeader, key []byte, value []byte, extr
 	return command, nil
 }
 
-func parseDecrementQ(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func parseDecrementQRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("DecrementQ MUST have key")
 	}
@@ -431,7 +431,7 @@ func parseDecrementQ(header *binaryRequestHeader, key []byte, value []byte, extr
 	return command, nil
 }
 
-func parseQuitQ(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func parseQuitQRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) > 0 {
 		return nil, fmt.Errorf("QuitQ MUST NOT have key")
 	}
@@ -449,7 +449,7 @@ func parseQuitQ(header *binaryRequestHeader, key []byte, value []byte, extras []
 	return command, nil
 }
 
-func parseFlushQ(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func parseFlushQRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) > 0 {
 		return nil, fmt.Errorf("FlushQ MUST NOT have key")
 	}
@@ -467,7 +467,7 @@ func parseFlushQ(header *binaryRequestHeader, key []byte, value []byte, extras [
 	return command, nil
 }
 
-func parseAppendQ(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func parseAppendQRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("AppendQ MUST have key")
 	}
@@ -485,7 +485,7 @@ func parseAppendQ(header *binaryRequestHeader, key []byte, value []byte, extras 
 	return command, nil
 }
 
-func parsePrependQ(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func parsePrependQRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("PrependQ MUST have key")
 	}

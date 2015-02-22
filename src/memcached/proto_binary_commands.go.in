@@ -5,16 +5,16 @@ package memcached
 import "fmt"
 import "encoding/binary"
 
-type parseFunc func(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error)
+type parseRequestFunc func(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error)
 
-func parseFuncTable() []parseFunc {
-	return []parseFunc{
-{{range $command := .binary_commands}}		parse{{$command.name}}, // {{$command.opcode}}
+func parseRequestFuncTable() []parseRequestFunc {
+	return []parseRequestFunc{
+{{range $command := .binary_commands}}		parse{{$command.name}}Request, // {{$command.opcode}}
 {{end}}	}
 }
 
 {{range $command := .binary_commands}}
-func parse{{$command.name}}(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func parse{{$command.name}}Request(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) {{if $command.request.has_key}}=={{else}}>{{end}} 0 {
 		return nil, fmt.Errorf({{if $command.request.has_key}}"{{$command.name}} MUST have key"{{else}}"{{$command.name}} MUST NOT have key"{{end}})
 	}

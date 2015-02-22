@@ -10,10 +10,6 @@ import "io/ioutil"
 import "strings"
 import "bytes"
 
-func toCapitalCase(word string) string {
-	return strings.ToUpper(word[0:1]) + word[1:]
-}
-
 func snakeToUpperCamel(word string) string {
 	var buffer bytes.Buffer
 
@@ -76,7 +72,6 @@ func main() {
 		}
 
 		t := template.Must(template.New("$generate").Funcs(template.FuncMap{
-			"toCapitalCase":     toCapitalCase,
 			"snakeToUpperCamel": snakeToUpperCamel,
 		}).Parse(string(in)))
 

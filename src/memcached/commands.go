@@ -7,57 +7,6 @@ package memcached
 
 
 
-type deleteCommand struct {
-	key    []byte
-
-
-	cas    uint64
-}
-
-func Delete(key []byte) *deleteCommand {
-	return &deleteCommand{
-		key:   key,
-
-	}
-}
-
-
-
-func (self *deleteCommand) WithCas(cas uint64) *deleteCommand {
-	self.cas = cas
-	return self
-}
-
-
-
-type appendCommand struct {
-	key    []byte
-	value  []byte
-	expire uint32
-	cas    uint64
-}
-
-func Append(key []byte, value []byte) *appendCommand {
-	return &appendCommand{
-		key:   key,
-		value: value,
-	}
-}
-
-
-func (self *appendCommand) WithExpire(expire uint32) *appendCommand {
-	self.expire = expire
-	return self
-}
-
-
-func (self *appendCommand) WithCas(cas uint64) *appendCommand {
-	self.cas = cas
-	return self
-}
-
-
-
 type addCommand struct {
 	key    []byte
 	value  []byte
@@ -80,6 +29,34 @@ func (self *addCommand) WithExpire(expire uint32) *addCommand {
 
 
 func (self *addCommand) WithCas(cas uint64) *addCommand {
+	self.cas = cas
+	return self
+}
+
+
+
+type replaceCommand struct {
+	key    []byte
+	value  []byte
+	expire uint32
+	cas    uint64
+}
+
+func Replace(key []byte, value []byte) *replaceCommand {
+	return &replaceCommand{
+		key:   key,
+		value: value,
+	}
+}
+
+
+func (self *replaceCommand) WithExpire(expire uint32) *replaceCommand {
+	self.expire = expire
+	return self
+}
+
+
+func (self *replaceCommand) WithCas(cas uint64) *replaceCommand {
 	self.cas = cas
 	return self
 }
@@ -132,6 +109,34 @@ func (self *incrementCommand) WithCas(cas uint64) *incrementCommand {
 
 
 
+type decrementCommand struct {
+	key    []byte
+	value  []byte
+	expire uint32
+	cas    uint64
+}
+
+func Decrement(key []byte, value []byte) *decrementCommand {
+	return &decrementCommand{
+		key:   key,
+		value: value,
+	}
+}
+
+
+func (self *decrementCommand) WithExpire(expire uint32) *decrementCommand {
+	self.expire = expire
+	return self
+}
+
+
+func (self *decrementCommand) WithCas(cas uint64) *decrementCommand {
+	self.cas = cas
+	return self
+}
+
+
+
 type setCommand struct {
 	key    []byte
 	value  []byte
@@ -160,56 +165,51 @@ func (self *setCommand) WithCas(cas uint64) *setCommand {
 
 
 
-type replaceCommand struct {
+type deleteCommand struct {
 	key    []byte
-	value  []byte
-	expire uint32
+
+
 	cas    uint64
 }
 
-func Replace(key []byte, value []byte) *replaceCommand {
-	return &replaceCommand{
+func Delete(key []byte) *deleteCommand {
+	return &deleteCommand{
 		key:   key,
-		value: value,
+
 	}
 }
 
 
-func (self *replaceCommand) WithExpire(expire uint32) *replaceCommand {
-	self.expire = expire
-	return self
-}
 
-
-func (self *replaceCommand) WithCas(cas uint64) *replaceCommand {
+func (self *deleteCommand) WithCas(cas uint64) *deleteCommand {
 	self.cas = cas
 	return self
 }
 
 
 
-type decrementCommand struct {
+type appendCommand struct {
 	key    []byte
 	value  []byte
 	expire uint32
 	cas    uint64
 }
 
-func Decrement(key []byte, value []byte) *decrementCommand {
-	return &decrementCommand{
+func Append(key []byte, value []byte) *appendCommand {
+	return &appendCommand{
 		key:   key,
 		value: value,
 	}
 }
 
 
-func (self *decrementCommand) WithExpire(expire uint32) *decrementCommand {
+func (self *appendCommand) WithExpire(expire uint32) *appendCommand {
 	self.expire = expire
 	return self
 }
 
 
-func (self *decrementCommand) WithCas(cas uint64) *decrementCommand {
+func (self *appendCommand) WithCas(cas uint64) *appendCommand {
 	self.cas = cas
 	return self
 }
