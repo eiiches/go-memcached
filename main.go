@@ -33,7 +33,7 @@ func main() {
 
 	server.Serve()
 
-	server.Call(memcached.Set([]byte("key"), []byte("value")).WithExpire(10).WithCas(1234))
-	server.Call(memcached.Add([]byte("key"), []byte("value")).WithExpire(10))
-	server.Multi(memcached.Add([]byte("key"), []byte("value")))
+	// server.Call(memcached.Set([]byte("key"), []byte("value")).WithExpire(10).WithCas(1234))
+	// server.Call(memcached.Add([]byte("key"), []byte("value")).WithExpire(10))
+	// server.Multi(memcached.Add([]byte("key"), []byte("value")))
 }

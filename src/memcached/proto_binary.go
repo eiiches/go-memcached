@@ -77,7 +77,7 @@ func (self binaryProtocolHandler) handleConnection(conn net.Conn, server *Memcac
 		if err != nil {
 			return err
 		}
-		fmt.Fprintf(os.Stderr, "%+v", command)
+		fmt.Fprintf(os.Stderr, "command: %+v\n", command)
 
 		server.Call(command)
 	}

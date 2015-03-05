@@ -2,6 +2,7 @@
 
 package memcached
 
+import "os"
 import "fmt"
 import "encoding/binary"
 
@@ -42,7 +43,8 @@ func parse{{$command.name}}Request(header *binaryRequestHeader, key []byte, valu
 	{{if $command.request.has_magic}}
 		magic := binary.BigEndian.Uint32(extras[{{$command.request.has_magic.offset}}:])
 		if magic != MAGIC_DEADBEEF {
-			return nil, fmt.Errorf("Invalid magic for {{$command.name}}: %+v", magic)
+			fmt.Fprintf(os.Stderr, "Invalid magic for {{$command.name}}: %+v\n", magic)
+			// return nil, fmt.Errorf("Invalid magic for {{$command.name}}: %+v", magic)
 		}
 	{{end}}
 

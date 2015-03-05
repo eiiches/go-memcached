@@ -11,8 +11,7 @@ func (self setCommand) execute(server *MemcachedServer) {
 	} else {
 		server.cache.Put(self.key, self.value, self.expire)
 	}
-	fmt.Fprintf(os.Stderr, "PUT %v = %v [cas: %v]\n\r", string(self.key), string(self.value), self.cas)
-	os.Stderr.Sync()
+	fmt.Fprintf(os.Stderr, "PUT %v = %v [cas: %v]\n", string(self.key), string(self.value), self.cas)
 }
 
 func (self addCommand) execute(server *MemcachedServer) {
@@ -20,7 +19,7 @@ func (self addCommand) execute(server *MemcachedServer) {
 
 func (self getCommand) execute(server *MemcachedServer) {
 	value, cas := server.cache.Get(self.key)
-	fmt.Print("GET", string(self.key), "=", string(value), "[cas:", cas, "]")
+	fmt.Fprintf(os.Stderr, "GET %v = %v [cas: %v]\n", string(self.key), string(value), cas)
 }
 
 func (self replaceCommand) execute(server *MemcachedServer) {

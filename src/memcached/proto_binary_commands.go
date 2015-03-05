@@ -5,6 +5,7 @@
 
 package memcached
 
+import "os"
 import "fmt"
 import "encoding/binary"
 
@@ -75,7 +76,8 @@ func parseSetRequest(header *binaryRequestHeader, key []byte, value []byte, extr
 
 	magic := binary.BigEndian.Uint32(extras[0:])
 	if magic != MAGIC_DEADBEEF {
-		return nil, fmt.Errorf("Invalid magic for Set: %+v", magic)
+		fmt.Fprintf(os.Stderr, "Invalid magic for Set: %+v\n", magic)
+		// return nil, fmt.Errorf("Invalid magic for Set: %+v", magic)
 	}
 
 	command := Set(key, value)
@@ -102,7 +104,8 @@ func parseAddRequest(header *binaryRequestHeader, key []byte, value []byte, extr
 
 	magic := binary.BigEndian.Uint32(extras[0:])
 	if magic != MAGIC_DEADBEEF {
-		return nil, fmt.Errorf("Invalid magic for Add: %+v", magic)
+		fmt.Fprintf(os.Stderr, "Invalid magic for Add: %+v\n", magic)
+		// return nil, fmt.Errorf("Invalid magic for Add: %+v", magic)
 	}
 
 	command := Add(key, value)
@@ -129,7 +132,8 @@ func parseReplaceRequest(header *binaryRequestHeader, key []byte, value []byte, 
 
 	magic := binary.BigEndian.Uint32(extras[0:])
 	if magic != MAGIC_DEADBEEF {
-		return nil, fmt.Errorf("Invalid magic for Replace: %+v", magic)
+		fmt.Fprintf(os.Stderr, "Invalid magic for Replace: %+v\n", magic)
+		// return nil, fmt.Errorf("Invalid magic for Replace: %+v", magic)
 	}
 
 	command := Replace(key, value)
@@ -432,7 +436,8 @@ func parseAddQRequest(header *binaryRequestHeader, key []byte, value []byte, ext
 
 	magic := binary.BigEndian.Uint32(extras[0:])
 	if magic != MAGIC_DEADBEEF {
-		return nil, fmt.Errorf("Invalid magic for AddQ: %+v", magic)
+		fmt.Fprintf(os.Stderr, "Invalid magic for AddQ: %+v\n", magic)
+		// return nil, fmt.Errorf("Invalid magic for AddQ: %+v", magic)
 	}
 
 	command := Add(key, value)
@@ -461,7 +466,8 @@ func parseReplaceQRequest(header *binaryRequestHeader, key []byte, value []byte,
 
 	magic := binary.BigEndian.Uint32(extras[0:])
 	if magic != MAGIC_DEADBEEF {
-		return nil, fmt.Errorf("Invalid magic for ReplaceQ: %+v", magic)
+		fmt.Fprintf(os.Stderr, "Invalid magic for ReplaceQ: %+v\n", magic)
+		// return nil, fmt.Errorf("Invalid magic for ReplaceQ: %+v", magic)
 	}
 
 	command := Replace(key, value)
