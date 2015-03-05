@@ -40,8 +40,9 @@ func parse{{$command.name}}Request(header *binaryRequestHeader, key []byte, valu
 	{{end}}
 
 	{{if $command.request.has_magic}}
-		if binary.BigEndian.Uint32(extras[{{$command.request.has_magic.offset}}:]) != MAGIC_DEADBEEF {
-			return nil, fmt.Errorf("Invalid magic for {{$command.name}}")
+		magic := binary.BigEndian.Uint32(extras[{{$command.request.has_magic.offset}}:])
+		if magic != MAGIC_DEADBEEF {
+			return nil, fmt.Errorf("Invalid magic for {{$command.name}}: %+v", magic)
 		}
 	{{end}}
 

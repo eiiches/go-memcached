@@ -54,17 +54,21 @@ func (self binaryProtocolHandler) handleConnection(conn net.Conn, server *Memcac
 			return fmt.Errorf("invalid magic %+v", header.magic)
 		}
 
+		fmt.Fprintf(os.Stderr, "header: %+v\n", headerBuf)
+
 		bodyBuf := make([]byte, header.totalBodyLength)
 		if _, err := io.ReadFull(conn, bodyBuf); err != nil {
 			return err
 		}
+
+		fmt.Fprintf(os.Stderr, "body: %+v\n", bodyBuf)
 
 		offset := 0
 		extras := bodyBuf[offset : offset+int(header.extrasLength)]
 		offset += int(header.extrasLength)
 		key := bodyBuf[offset : offset+int(header.keyLength)]
 		offset += int(header.keyLength)
-		value := bodyBuf[offset : HEADER_BYTES+header.totalBodyLength]
+		value := bodyBuf[offset:header.totalBodyLength]
 
 		if int(header.opcode) >= len(self.parsers) {
 			return fmt.Errorf("invalid opcode")
@@ -73,6 +77,7 @@ func (self binaryProtocolHandler) handleConnection(conn net.Conn, server *Memcac
 		if err != nil {
 			return err
 		}
+		fmt.Fprintf(os.Stderr, "%+v", command)
 
 		server.Call(command)
 	}

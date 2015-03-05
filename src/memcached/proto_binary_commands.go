@@ -69,12 +69,13 @@ func parseSetRequest(header *binaryRequestHeader, key []byte, value []byte, extr
 		return nil, fmt.Errorf("Set MUST have value")
 	}
 
-	if len(extras) > 0 {
-		return nil, fmt.Errorf("Set MUST NOT have extras")
+	if len(extras) != 8 {
+		return nil, fmt.Errorf("Set MUST have extras of exactly 8 bytes")
 	}
 
-	if binary.BigEndian.Uint32(extras[0:]) != MAGIC_DEADBEEF {
-		return nil, fmt.Errorf("Invalid magic for Set")
+	magic := binary.BigEndian.Uint32(extras[0:])
+	if magic != MAGIC_DEADBEEF {
+		return nil, fmt.Errorf("Invalid magic for Set: %+v", magic)
 	}
 
 	command := Set(key, value)
@@ -99,8 +100,9 @@ func parseAddRequest(header *binaryRequestHeader, key []byte, value []byte, extr
 		return nil, fmt.Errorf("Add MUST NOT have extras")
 	}
 
-	if binary.BigEndian.Uint32(extras[0:]) != MAGIC_DEADBEEF {
-		return nil, fmt.Errorf("Invalid magic for Add")
+	magic := binary.BigEndian.Uint32(extras[0:])
+	if magic != MAGIC_DEADBEEF {
+		return nil, fmt.Errorf("Invalid magic for Add: %+v", magic)
 	}
 
 	command := Add(key, value)
@@ -125,8 +127,9 @@ func parseReplaceRequest(header *binaryRequestHeader, key []byte, value []byte, 
 		return nil, fmt.Errorf("Replace MUST NOT have extras")
 	}
 
-	if binary.BigEndian.Uint32(extras[0:]) != MAGIC_DEADBEEF {
-		return nil, fmt.Errorf("Invalid magic for Replace")
+	magic := binary.BigEndian.Uint32(extras[0:])
+	if magic != MAGIC_DEADBEEF {
+		return nil, fmt.Errorf("Invalid magic for Replace: %+v", magic)
 	}
 
 	command := Replace(key, value)
@@ -427,8 +430,9 @@ func parseAddQRequest(header *binaryRequestHeader, key []byte, value []byte, ext
 		return nil, fmt.Errorf("AddQ MUST NOT have extras")
 	}
 
-	if binary.BigEndian.Uint32(extras[0:]) != MAGIC_DEADBEEF {
-		return nil, fmt.Errorf("Invalid magic for AddQ")
+	magic := binary.BigEndian.Uint32(extras[0:])
+	if magic != MAGIC_DEADBEEF {
+		return nil, fmt.Errorf("Invalid magic for AddQ: %+v", magic)
 	}
 
 	command := Add(key, value)
@@ -455,8 +459,9 @@ func parseReplaceQRequest(header *binaryRequestHeader, key []byte, value []byte,
 		return nil, fmt.Errorf("ReplaceQ MUST NOT have extras")
 	}
 
-	if binary.BigEndian.Uint32(extras[0:]) != MAGIC_DEADBEEF {
-		return nil, fmt.Errorf("Invalid magic for ReplaceQ")
+	magic := binary.BigEndian.Uint32(extras[0:])
+	if magic != MAGIC_DEADBEEF {
+		return nil, fmt.Errorf("Invalid magic for ReplaceQ: %+v", magic)
 	}
 
 	command := Replace(key, value)
