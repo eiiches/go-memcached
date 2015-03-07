@@ -1,6 +1,6 @@
 package main
 
-import "memcached"
+import "memcached/server"
 import "fmt"
 import "os"
 import "os/signal"
