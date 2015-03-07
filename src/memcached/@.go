@@ -44,7 +44,7 @@ func isTrue(value interface{}) bool {
 }
 
 func loadConfig() map[interface{}]interface{} {
-	config, err := ioutil.ReadFile("generate.yml")
+	config, err := ioutil.ReadFile("@.yml")
 	if err != nil {
 		panic(err)
 	}
@@ -83,7 +83,7 @@ func processDirectory(config map[interface{}]interface{}, dirname string) {
 				panic(err)
 			}
 
-			t := template.Must(template.New("$generate").Funcs(template.FuncMap{
+			t := template.Must(template.New("@").Funcs(template.FuncMap{
 				"snakeToUpperCamel": snakeToUpperCamel,
 				"isTrue":            isTrue,
 			}).Parse(string(in)))
