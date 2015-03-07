@@ -24,4 +24,5 @@ func (self *MemcachedClient) Close() error {
 }
 
 func (self *MemcachedClient) Call(command clientCommand) error {
+	return nil
 }

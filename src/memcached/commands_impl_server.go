@@ -5,6 +5,10 @@ package memcached
 import "os"
 import "fmt"
 
+type serverCommand interface {
+	execute(server *MemcachedServer)
+}
+
 func (self setCommand) execute(server *MemcachedServer) {
 	if self.cas != 0 {
 		server.cache.CompareAndSet(self.key, self.value, self.cas, self.expire)

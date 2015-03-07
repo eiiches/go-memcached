@@ -360,7 +360,3 @@ func (self *getWithKeyCommand) WithQuiet(quiet bool) *getWithKeyCommand {
 	self.quiet = quiet
 	return self
 }
-
-type serverCommand interface {
-	execute(server *MemcachedServer)
-}

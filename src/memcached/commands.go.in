@@ -52,7 +52,3 @@ package memcached
 	{{end}}
 
 {{end}}
-
-type serverCommand interface {
-	execute(server *MemcachedServer)
-}

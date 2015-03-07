@@ -1,10 +1,11 @@
 package main
 
-import "memcached"
 import "fmt"
 import "os"
+import "time"
 import "os/signal"
 import "runtime"
+import "memcached"
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
@@ -12,12 +13,6 @@ func main() {
 	server := memcached.NewMemcachedServer()
 
 	if err := server.Listen("tcp", "0.0.0.0:11212"); err != nil {
-		fmt.Fprintf(os.Stderr, "error: %+v\n", err)
-		server.Shutdown()
-		os.Exit(1)
-	}
-
-	if err := server.Listen("unix", "/tmp/memcached.sock"); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %+v\n", err)
 		server.Shutdown()
 		os.Exit(1)
@@ -34,9 +29,18 @@ func main() {
 		}
 	}()
 
-	server.Serve()
+	go func() {
+		time.Sleep(10000)
 
-	// server.Call(memcached.Set([]byte("key"), []byte("value")).WithExpire(10).WithCas(1234))
-	// server.Call(memcached.Add([]byte("key"), []byte("value")).WithExpire(10))
-	// server.Multi(memcached.Add([]byte("key"), []byte("value")))
+		client, err := memcached.NewMemcachedClient("tcp", "localhost:11212")
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error: %+v\n", err)
+			return
+		}
+		defer client.Close()
+
+		client.Call(memcached.Set([]byte("key"), []byte("value")).WithExpire(10))
+	}()
+
+	server.Serve()
 }
