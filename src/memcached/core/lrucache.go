@@ -39,6 +39,8 @@ type LruCache interface {
 
 	// PREPEND
 	Prepend(key []byte, value []byte, expire uint32) []byte
+
+	Clear()
 }
 
 type entry_t struct {
@@ -254,4 +256,9 @@ func (self *concurrentLruCache) CompareAndRemove(key []byte, cas uint64) []byte 
 func (self *concurrentLruCache) CompareAndSet(key []byte, value []byte, cas uint64, expire uint32) []byte {
 	// TODO
 	return nil
+}
+
+func (self *concurrentLruCache) Clear() {
+	// TODO
+	return
 }

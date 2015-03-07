@@ -21,34 +21,38 @@ func NewMemcachedServer() *MemcachedServer {
 	}
 }
 
+func (self *MemcachedServer) serveLoop(sock net.Listener, handler protocolHandler) {
+	for {
+		conn, err := sock.Accept()
+		if err != nil {
+			if self.shutdownRequested.Get() {
+				return
+			}
+			fmt.Fprintf(os.Stderr, "error: %+v\n", err)
+			continue
+		}
+		go func() {
+			err := handler.handleConnection(conn, self)
+			conn.Close()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "error: %+v\n", err)
+			}
+		}()
+	}
+}
+
 func (self *MemcachedServer) Serve() {
 	handler := newBinaryProtocolHandler()
-	num_accept_threads := 4
+	acceptThreads := 1
 
 	wg := sync.WaitGroup{}
-	wg.Add(num_accept_threads * len(self.socks))
-	for i := 0; i < num_accept_threads; i++ {
+	wg.Add(acceptThreads * len(self.socks))
+	for i := 0; i < acceptThreads; i++ {
 		for _, sock := range self.socks {
-			go func() {
+			go func(sock net.Listener) {
 				defer wg.Done()
-				for {
-					conn, err := sock.Accept()
-					if err != nil {
-						if self.shutdownRequested.Get() {
-							return
-						}
-						fmt.Fprintf(os.Stderr, "error: %+v\n", err)
-						continue
-					}
-					go func() {
-						err := handler.handleConnection(conn, self)
-						conn.Close()
-						if err != nil {
-							fmt.Fprintf(os.Stderr, "error: %+v\n", err)
-						}
-					}()
-				}
-			}()
+				self.serveLoop(sock, handler)
+			}(sock)
 		}
 	}
 	wg.Wait()

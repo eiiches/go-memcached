@@ -4,8 +4,11 @@ import "memcached"
 import "fmt"
 import "os"
 import "os/signal"
+import "runtime"
 
 func main() {
+	runtime.GOMAXPROCS(runtime.NumCPU())
+
 	server := memcached.NewMemcachedServer()
 
 	if err := server.Listen("tcp", "0.0.0.0:11212"); err != nil {
@@ -14,11 +17,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	// if err := server.Listen("unix", "/tmp/memcached.sock"); err != nil {
-	// 	fmt.Fprintf(os.Stderr, "error: %+v\n", err)
-	// 	server.Shutdown()
-	// 	os.Exit(1)
-	// }
+	if err := server.Listen("unix", "/tmp/memcached.sock"); err != nil {
+		fmt.Fprintf(os.Stderr, "error: %+v\n", err)
+		server.Shutdown()
+		os.Exit(1)
+	}
 
 	sigch := make(chan os.Signal, 1)
 	signal.Notify(sigch, os.Interrupt)
