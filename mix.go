@@ -39,7 +39,27 @@ func main() {
 		}
 		defer client.Close()
 
-		client.Call(memcached.Set([]byte("key"), []byte("value")).WithExpire(10))
+		client.Set("key", "value", memcached.Set.WithExpire(10))
+		client.Set("key", "value").WithExpire(10).Call()
+
+		resp1, err := client.Set("key", "value", &memcached.SetOptions{
+			Expire: 10,
+		})
+
+		resp2, err := client.Get("key", &memcached.GetOptions{
+			Expire: 10,
+		})
+
+		resps, err := client.Batch([]memcached.Request{
+			memcached.NewSetRequest([]byte("key"), []byte("value"), &memcached.SetOptions{
+				Expire: 10,
+			}),
+			memcached.NewGetRequest([]byte("key"), nil),
+		})
+
+		resp, err := client.Call(memcached.NewSetRequest([]byte("key"), []byte("value"), &memcached.SetOptions{
+			Expire: 10,
+		}))
 	}()
 
 	server.Serve()

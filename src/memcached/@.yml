@@ -89,6 +89,7 @@ binary_commands:
       has_key: true
       has_value: false
       has_cas: false
+    # cas, value, flags
   - name: Set
     opcode: 0x01
     request:
@@ -98,6 +99,7 @@ binary_commands:
       has_cas: true
       has_magic: {offset: 0}
       has_extras: {size: 8}
+    # cas
   - name: Add
     opcode: 0x02
     request:
@@ -106,6 +108,7 @@ binary_commands:
       has_expire: {offset: 4}
       has_cas: true
       has_magic: {offset: 0}
+    # cas
   - name: Replace
     opcode: 0x03
     request:
@@ -114,11 +117,13 @@ binary_commands:
       has_expire: {offset: 4}
       has_cas: true
       has_magic: {offset: 0}
+    # cas
   - name: Delete
     opcode: 0x04
     request:
       has_key: true
       has_cas: true
+    # N/A
   - name: Increment
     opcode: 0x05
     request:
@@ -132,6 +137,7 @@ binary_commands:
         - {var: "initial", type: "Uint64", offset: 8}
       command:
         extra_args: ["amount", "initial"]
+    # value, cas
   - name: Decrement
     opcode: 0x06
     request:
@@ -145,6 +151,7 @@ binary_commands:
         - {var: "initial", type: "Uint64", offset: 8}
       command:
         extra_args: ["amount", "initial"]
+    # value, cas
   - name: Quit
     opcode: 0x07
     request:
