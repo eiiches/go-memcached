@@ -9,10 +9,10 @@ import "hash/fnv"
 
 type LruCache interface {
 	// equivalent to SET operation
-	Put(key []byte, value []byte, expire uint32) []byte
+	Put(key []byte, value []byte, expire uint32) (oldval []byte, newcas uint64)
 
 	// equivalent to COMPARE_AND_SET, COMPARE_AND_REPLACE
-	CompareAndSet(key []byte, value []byte, cas uint64, expire uint32) []byte
+	CompareAndSet(key []byte, value []byte, cas uint64, expire uint32) (oldval []byte, newcas uint64)
 
 	// equivalent to GET operation
 	Get(key []byte) ([]byte, uint64) /* value and CAS token */
@@ -28,7 +28,7 @@ type LruCache interface {
 	Decrement(key []byte, initial uint64, decr uint64, expire uint32) []byte
 
 	// REPLACE operation, which MUST fail if the item doesn't exist
-	Replace(key []byte, value []byte, expire uint32) bool
+	Replace(key []byte, value []byte, expire uint32) (success bool, newcas uint64)
 
 	// equivalent to ADD operation, which MUST fail if the item already exists
 	// COMPARE_AND_ADD always fails
@@ -49,7 +49,7 @@ type entry_t struct {
 	next   *entry_t
 	expire uint64
 	value  []byte
-	txid   uint64
+	cas    uint64
 }
 
 type segment_t struct {
@@ -164,7 +164,7 @@ func (self *concurrentLruCache) Get(key []byte) ([]byte, uint64) {
 
 	for pent := (*entry_t)(atomic.LoadPointer(ppent_)); pent != nil; pent = pent.next {
 		if pent.hash == h && bytes.Compare(key, pent.key) == 0 {
-			return pent.value, pent.txid
+			return pent.value, pent.cas
 		}
 	}
 	return nil, 0
@@ -196,7 +196,7 @@ func ensureSegment(ppseg **segment_t) *segment_t {
 	return (*segment_t)(pseg_)
 }
 
-func (self *concurrentLruCache) Put(key []byte, value []byte, expire uint32) []byte {
+func (self *concurrentLruCache) Put(key []byte, value []byte, expire uint32) ([]byte, uint64) {
 	h := hash32(key)
 	sindex := (h >> self.segmentShift) & self.segmentMask
 
@@ -206,7 +206,7 @@ func (self *concurrentLruCache) Put(key []byte, value []byte, expire uint32) []b
 		pseg_ = unsafe.Pointer(ensureSegment(ppseg))
 	}
 
-	return (*segment_t)(pseg_).put(key, h, value, true)
+	return (*segment_t)(pseg_).put(key, h, value, true), 0
 }
 
 func (self *concurrentLruCache) Remove(key []byte) []byte {
@@ -233,9 +233,9 @@ func (self *concurrentLruCache) Prepend(key []byte, value []byte, expire uint32)
 	return nil
 }
 
-func (self *concurrentLruCache) Replace(key []byte, value []byte, expire uint32) bool {
+func (self *concurrentLruCache) Replace(key []byte, value []byte, expire uint32) (success bool, newcas uint64) {
 	// TODO
-	return false
+	return false, 0
 }
 
 func (self *concurrentLruCache) Increment(key []byte, initial uint64, incr uint64, expire uint32) []byte {
@@ -253,9 +253,9 @@ func (self *concurrentLruCache) CompareAndRemove(key []byte, cas uint64) []byte 
 	return nil
 }
 
-func (self *concurrentLruCache) CompareAndSet(key []byte, value []byte, cas uint64, expire uint32) []byte {
+func (self *concurrentLruCache) CompareAndSet(key []byte, value []byte, cas uint64, expire uint32) ([]byte, uint64) {
 	// TODO
-	return nil
+	return nil, 0
 }
 
 func (self *concurrentLruCache) Clear() {

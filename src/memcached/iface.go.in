@@ -1,0 +1,39 @@
+// +build !generate
+
+package memcached
+
+type Memcached interface {
+	{{range $command := .commands}}{{with $Name := $command.name | snakeToUpperCamel}}
+		{{$Name}}({{if $command.args.has_key}}key []byte, {{end}}{{if $command.args.has_value}}value []byte, {{end}}{{range $arg := $command.args.extra}}{{$arg.var}} {{$arg.type}}, {{end}}opts *{{$Name}}Options) ({{if $command.returns.has_key}}rkey []byte, {{end}}{{if $command.returns.has_value}}rvalue []byte, {{end}}{{if $command.returns.has_flags}}rflags uint32, {{end}}{{if $command.returns.has_cas}}rcas uint64, {{end}}rerr error)
+	{{end}}{{end}}
+}
+
+{{range $command := .commands}}{{with $Name := $command.name | snakeToUpperCamel}}
+	func {{$Name}}({{if $command.args.has_key}}key []byte, {{end}}{{if $command.args.has_value}}value []byte, {{end}}{{range $arg := $command.args.extra}}{{$arg.var}} {{$arg.type}}, {{end}}opts *{{$Name}}Options) (*command{{$Name}}) {
+		return &command{{$Name}} {
+			{{if $command.args.has_key}}   key:   key,   {{end}}
+			{{if $command.args.has_value}} value: value, {{end}}
+			{{range $arg := $command.args.extra}}
+				{{$arg.var}}: {{$arg.var}},
+			{{end}}
+			opts: opts,
+		}
+	}
+
+	type {{$Name}}Options struct {
+		{{if $command.opts.has_expire}} Expire uint32 {{end}}
+		{{if $command.opts.has_cas}}    Cas    uint64 {{end}}
+		{{if $command.opts.has_quiet}}  Quiet  bool   {{end}}
+	}
+{{end}}{{end}}
+
+{{range $command := .commands}}{{with $Name := $command.name | snakeToUpperCamel}}
+	type command{{$Name}} struct {
+		{{if $command.args.has_key}}   key    []byte {{end}}
+		{{if $command.args.has_value}} value  []byte {{end}}
+		{{range $arg := $command.args.extra}}
+			{{$arg.var}} {{$arg.type}}
+		{{end}}
+		opts *{{$Name}}Options
+	}
+{{end}}{{end}}

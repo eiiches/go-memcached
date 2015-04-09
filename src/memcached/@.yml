@@ -1,88 +1,158 @@
 commands:
-  - name: add
-    has_expire: true
-    has_key: true
-    has_cas: true
-    has_value: true
-    has_quiet: true
-  - name: replace
-    has_expire: true
-    has_key: true
-    has_cas: true
-    has_value: true
-    has_quiet: true
-  - name: get
-    has_expire: false
-    has_key: true
-    has_cas: false
-    has_value: false
-    has_quiet: true
-  - name: increment
-    has_expire: true
-    has_key: true
-    has_cas: true
-    has_value: false
-    extra_args:
-      - {var: "amount", type: "uint64"}
-      - {var: "initial", type: "uint64"}
-    has_quiet: true
-  - name: decrement
-    has_expire: true
-    has_cas: true
-    has_key: true
-    has_value: false
-    extra_args:
-      - {var: "amount", type: "uint64"}
-      - {var: "initial", type: "uint64"}
-    has_quiet: true
-  - name: set
-    has_expire: true
-    has_key: true
-    has_cas: true
-    has_value: true
-    has_quiet: true
-  - name: delete
-    has_expire: false
-    has_key: true
-    has_cas: true
-    has_value: false
-    has_quiet: true
-  - name: append
-    has_expire: true
-    has_key: true
-    has_cas: true
-    has_value: true
-    has_quiet: true
-  - name: prepend
-    has_expire: true
-    has_key: true
-    has_cas: true
-    has_value: true
-    has_quiet: true
-  - name: flush
-    has_expire: false
-    has_cas: false
-    has_value: false
-    has_key: false
-    has_quiet: true
-  - name: nop
-    private: true
-  - name: quit
-    private: true
-    has_quiet: true
-  - name: version
-    private: true
-  - name: stat
-    private: true
-  - name: getWithKey
-    has_expire: false
-    has_key: true
-    has_cas: false
-    has_value: false
-    has_quiet: true
+  - &add
+    name: add
+    args:
+      has_key: true
+      has_value: true
+    opts:
+      has_expire: true
+      has_cas: true
+      has_quiet: true
+    returns:
+      has_cas: true
+
+  - &replace
+    name: replace
+    args:
+      has_key: true
+      has_value: true
+    opts:
+      has_expire: true
+      has_cas: true
+      has_quiet: true
+    returns:
+      has_cas: true
+
+  - &get
+    name: get
+    args:
+      has_key: true
+      has_value: false
+    opts:
+      has_expire: false
+      has_cas: false
+      has_quiet: true
+    returns:
+      has_value: true
+      has_flags: true
+      has_cas: true
+
+  - &increment
+    name: increment
+    args:
+      has_key: true
+      has_value: false
+      extra:
+        - {var: "amount", type: "uint64"}
+        - {var: "initial", type: "uint64"}
+    opts:
+      has_expire: true
+      has_cas: true
+      has_quiet: true
+    returns:
+      has_value: true
+      has_cas: true
+
+  - &decrement
+    name: decrement
+    args:
+      has_key: true
+      has_value: false
+      extra:
+        - {var: "amount", type: "uint64"}
+        - {var: "initial", type: "uint64"}
+    opts:
+      has_expire: true
+      has_cas: true
+      has_quiet: true
+    returns:
+      has_value: true
+      has_cas: true
+
+  - &set
+    name: set
+    args:
+      has_key: true
+      has_value: true
+    opts:
+      has_expire: true
+      has_cas: true
+      has_quiet: true
+    returns:
+      has_cas: true
+
+  - &delete
+    name: delete
+    args:
+      has_key: true
+      has_value: false
+    opts:
+      has_expire: false
+      has_cas: true
+      has_quiet: true
+
+  - &append
+    name: append
+    args:
+      has_key: true
+      has_value: true
+    opts:
+      has_expire: false
+      has_cas: true
+      has_quiet: true
+
+  - &prepend
+    name: prepend
+    args:
+      has_key: true
+      has_value: true
+    opts:
+      has_expire: false
+      has_cas: true
+      has_quiet: true
+
+  - &flush
+    name: flush
+    args:
+      has_key: false
+      has_value: false
+    opts:
+      has_expire: false
+      has_cas: false
+      has_quiet: true
+
+  - &nop
+    name: nop
+
+  - &quit
+    name: quit
+    opts:
+      has_quiet: true
+
+  - &version
+    name: version
+
+  - &stat
+    name: stat
+
+  - &get_with_key
+    name: get_with_key
+    args:
+      has_key: true
+      has_value: false
+    opts:
+      has_expire: false
+      has_cas: false
+      has_quiet: true
+    returns:
+      has_key: true
+      has_value: true
+      has_cas: true
+      has_flags: true
 
 binary_commands:
   - name: Get
+    command: *get
     opcode: 0x00
     request:
       has_extras: false
@@ -91,6 +161,7 @@ binary_commands:
       has_cas: false
     # cas, value, flags
   - name: Set
+    command: *set
     opcode: 0x01
     request:
       has_key: true
@@ -101,6 +172,7 @@ binary_commands:
       has_extras: {size: 8}
     # cas
   - name: Add
+    command: *add
     opcode: 0x02
     request:
       has_key: true
@@ -110,6 +182,7 @@ binary_commands:
       has_magic: {offset: 0}
     # cas
   - name: Replace
+    command: *replace
     opcode: 0x03
     request:
       has_key: true
@@ -119,12 +192,14 @@ binary_commands:
       has_magic: {offset: 0}
     # cas
   - name: Delete
+    command: *delete
     opcode: 0x04
     request:
       has_key: true
       has_cas: true
     # N/A
   - name: Increment
+    command: *increment
     opcode: 0x05
     request:
       has_key: true
@@ -135,10 +210,10 @@ binary_commands:
       extras:
         - {var: "amount", type: "Uint64", offset: 0}
         - {var: "initial", type: "Uint64", offset: 8}
-      command:
-        extra_args: ["amount", "initial"]
+      args: {extra: ["amount", "initial"]}
     # value, cas
   - name: Decrement
+    command: *decrement
     opcode: 0x06
     request:
       has_key: true
@@ -149,37 +224,30 @@ binary_commands:
       extras:
         - {var: "amount", type: "Uint64", offset: 0}
         - {var: "initial", type: "Uint64", offset: 8}
-      command:
-        extra_args: ["amount", "initial"]
+      args: {extra: ["amount", "initial"]}
     # value, cas
   - name: Quit
     opcode: 0x07
-    request:
-      command:
-        name: quit
+    command: *quit
   - name: Flush
+    command: *flush
     opcode: 0x08
   - name: GetQ
+    command: *get
     opcode: 0x09
     request:
       has_extras: false
       has_key: true
       has_value: false
-      command:
-        name: Get
-        options:
-          with_quiet: true
+      opts: {extra: {quiet: true}}
   - name: Nop
     opcode: 0x0A
-    request:
-      command:
-        name: nop
+    command: *nop
   - name: Version
     opcode: 0x0B
-    request:
-      command:
-        name: version
+    command: *version
   - name: GetWithKey
+    command: *get_with_key
     opcode: 0x0C
     request:
       has_extras: false
@@ -187,41 +255,39 @@ binary_commands:
       has_value: false
       has_cas: false
   - name: GetWithKeyQ
+    command: *get_with_key
     opcode: 0x0D
     request:
       has_extras: false
       has_key: true
       has_value: false
       has_cas: false
-      command:
-        name: GetWithKey
-        options:
-          with_quiet: true
+      opts: {extra: {quiet: true}}
   - name: Append
+    command: *append
     opcode: 0x0E
     request:
       has_key: true
       has_value: true
   - name: Prepend
+    command: *prepend
     opcode: 0x0F
     request:
       has_key: true
       has_value: true
   - name: Stat
+    command: *stat
     opcode: 0x10
-    request:
-      command:
-        name: stat
   - name: SetQ
+    command: *set
     opcode: 0x11
     request:
       has_key: true
       has_value: true
-      command:
-        name: Set
-        options:
-          with_quiet: true
+      has_expire: {offset: 4}
+      opts: {extra: {quiet: true}}
   - name: AddQ
+    command: *add
     opcode: 0x12
     request:
       has_key: true
@@ -229,11 +295,9 @@ binary_commands:
       has_expire: {offset: 4}
       has_cas: true
       has_magic: {offset: 0}
-      command:
-        name: Add
-        options:
-          with_quiet: true
+      opts: {extra: {quiet: true}}
   - name: ReplaceQ
+    command: *replace
     opcode: 0x13
     request:
       has_key: true
@@ -241,77 +305,62 @@ binary_commands:
       has_expire: {offset: 4}
       has_cas: true
       has_magic: {offset: 0}
-      command:
-        name: Replace
-        options:
-          with_quiet: true
+      opts: {extra: {quiet: true}}
   - name: DeleteQ
+    command: *delete
     opcode: 0x14
     request:
       has_key: true
-      command:
-        name: Delete
-        options:
-          with_quiet: true
+      opts: {extra: {quiet: true}}
   - name: IncrementQ
+    command: *increment
     opcode: 0x15
     request:
       has_key: true
       has_value: false
       has_extras: {size: 20}
       has_cas: true
+      has_expire: {offset: 16}
       extras:
         - {var: "amount", type: "Uint64", offset: 0}
         - {var: "initial", type: "Uint64", offset: 8}
-      command:
-        name: Increment
-        extra_args: ["amount", "initial"]
-        options:
-          with_quiet: true
+      opts: {extra: {quiet: true}}
+      args: {extra: ["amount", "initial"]}
   - name: DecrementQ
+    command: *decrement
     opcode: 0x16
     request:
       has_key: true
       has_value: false
       has_extras: {size: 20}
       has_cas: true
+      has_expire: {offset: 16}
       extras:
         - {var: "amount", type: "Uint64", offset: 0}
         - {var: "initial", type: "Uint64", offset: 8}
-      command:
-        name: Decrement
-        extra_args: ["amount", "initial"]
-        options:
-          with_quiet: true
+      opts: {extra: {quiet: true}}
+      args: {extra: ["amount", "initial"]}
   - name: QuitQ
     opcode: 0x17
+    command: *quit
     request:
-      command:
-        name: quit
-        options:
-          with_quiet: true
+      opts: {extra: {quiet: true}}
   - name: FlushQ
+    command: *flush
     opcode: 0x18
     request:
-      command:
-        name: Flush
-        options:
-          with_quiet: true
+      opts: {extra: {quiet: true}}
   - name: AppendQ
+    command: *append
     opcode: 0x19
     request:
       has_key: true
       has_value: true
-      command:
-        name: Append
-        options:
-          with_quiet: true
+      opts: {extra: {quiet: true}}
   - name: PrependQ
+    command: *prepend
     opcode: 0x1A
     request:
       has_key: true
       has_value: true
-      command:
-        name: Prepend
-        options:
-          with_quiet: true
+      opts: {extra: {quiet: true}}

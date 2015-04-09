@@ -37,7 +37,7 @@ func (header *binaryRequestHeader) parse(buf []byte) {
 }
 
 type binaryProtocolHandler struct {
-	parsers []parseRequestFunc
+	handlers []binaryRequestHandler
 }
 
 func (self binaryProtocolHandler) handleConnection(conn net.Conn, server *MemcachedServer) error {
@@ -70,22 +70,20 @@ func (self binaryProtocolHandler) handleConnection(conn net.Conn, server *Memcac
 		offset += int(header.keyLength)
 		value := bodyBuf[offset:header.totalBodyLength]
 
-		if int(header.opcode) >= len(self.parsers) {
+		if int(header.opcode) >= len(self.handlers) {
 			return fmt.Errorf("invalid opcode")
 		}
-		command, err := self.parsers[header.opcode](&header, key, value, extras)
+		command, err := self.handlers[header.opcode](server, &header, key, value, extras)
 		if err != nil {
 			return err
 		}
 		fmt.Fprintf(os.Stderr, "command: %+v\n", command)
-
-		server.Call(command)
 	}
 	return nil
 }
 
 func newBinaryProtocolHandler() protocolHandler {
 	return &binaryProtocolHandler{
-		parsers: parseRequestFuncTable(),
+		handlers: binaryRequestHandlerTable(),
 	}
 }

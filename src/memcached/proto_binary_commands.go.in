@@ -6,64 +6,65 @@ import "os"
 import "fmt"
 import "encoding/binary"
 
-type parseRequestFunc func(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error)
+type binaryRequestHandler func(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error)
 
-func parseRequestFuncTable() []parseRequestFunc {
-	return []parseRequestFunc{
-{{range $command := .binary_commands}}		parse{{$command.name}}Request, // {{$command.opcode}}
-{{end}}	}
+func binaryRequestHandlerTable() []binaryRequestHandler {
+	return []binaryRequestHandler{
+{{range $command := .binary_commands}}		handle{{$command.name}}Request, // {{$command.opcode}}
+{{end}} }
 }
 
-{{range $command := .binary_commands}}
-func parse{{$command.name}}Request(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
-	if len(key) {{if $command.request.has_key}}=={{else}}>{{end}} 0 {
-		return nil, fmt.Errorf({{if $command.request.has_key}}"{{$command.name}} MUST have key"{{else}}"{{$command.name}} MUST NOT have key"{{end}})
+{{range $op := .binary_commands}}
+func handle{{$op.name}}Request(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+	if len(key) {{if $op.request.has_key}}=={{else}}>{{end}} 0 {
+		return nil, fmt.Errorf({{if $op.request.has_key}}"{{$op.name}} MUST have key"{{else}}"{{$op.name}} MUST NOT have key"{{end}})
 	}
 
-	if len(value) {{if $command.request.has_value}}=={{else}}>{{end}} 0 {
-		return nil, fmt.Errorf({{if $command.request.has_value}}"{{$command.name}} MUST have value"{{else}}"{{$command.name}} MUST NOT have value"{{end}})
+	if len(value) {{if $op.request.has_value}}=={{else}}>{{end}} 0 {
+		return nil, fmt.Errorf({{if $op.request.has_value}}"{{$op.name}} MUST have value"{{else}}"{{$op.name}} MUST NOT have value"{{end}})
 	}
 
-	{{if $command.request.has_extras}}
-		{{if $command.request.has_extras | isTrue}}
+	{{if $op.request.has_extras}}
+		{{if $op.request.has_extras | isTrue}}
 			if len(extras) == 0 {
-				return nil, fmt.Errorf("{{$command.name}} MUST have extras")
+				return nil, fmt.Errorf("{{$op.name}} MUST have extras")
 			}
 		{{else}}
-			if len(extras) != {{$command.request.has_extras.size}} {
-			return nil, fmt.Errorf("{{$command.name}} MUST have extras of exactly {{$command.request.has_extras.size}} bytes")
+			if len(extras) != {{$op.request.has_extras.size}} {
+			return nil, fmt.Errorf("{{$op.name}} MUST have extras of exactly {{$op.request.has_extras.size}} bytes")
 			}
 		{{end}}
 	{{else}}
 		if len(extras) > 0 {
-			return nil, fmt.Errorf("{{$command.name}} MUST NOT have extras")
+			return nil, fmt.Errorf("{{$op.name}} MUST NOT have extras")
 		}
 	{{end}}
 
-	{{if $command.request.has_magic}}
-		magic := binary.BigEndian.Uint32(extras[{{$command.request.has_magic.offset}}:])
+	{{if $op.request.has_magic}}
+		magic := binary.BigEndian.Uint32(extras[{{$op.request.has_magic.offset}}:])
 		if magic != MAGIC_DEADBEEF {
-			fmt.Fprintf(os.Stderr, "Invalid magic for {{$command.name}}: %+v\n", magic)
-			// return nil, fmt.Errorf("Invalid magic for {{$command.name}}: %+v", magic)
+			fmt.Fprintf(os.Stderr, "Invalid magic for {{$op.name}}: %+v\n", magic)
+			// return nil, fmt.Errorf("Invalid magic for {{$op.name}}: %+v", magic)
 		}
 	{{end}}
 
-	{{range $extra := $command.request.extras}}
+	{{range $extra := $op.request.extras}}
 		{{$extra.var}} := binary.BigEndian.{{$extra.type}}(extras[{{$extra.offset}}:])
 	{{end}}
 
-	command := {{or $command.request.command.name $command.name}}({{if $command.request.has_key}}key{{if $command.request.has_value}}, value{{end}}{{end}}{{range $arg := $command.request.command.extra_args}}, {{$arg}}{{end}})
 
-	{{if $command.request.has_expire}}
-		command.WithExpire(binary.BigEndian.Uint32(extras[{{$command.request.has_expire.offset}}:]))
-	{{end}}
-	{{if $command.request.has_cas}}
-		command.WithCas(header.cas)
-		{{end}}
-	{{range $key, $value := $command.request.command.options}}
-		command.{{$key | snakeToUpperCamel}}({{$value}})
-	{{end}}
+	{{with $command := $op.command}}{{with $CommandName := $command.name | snakeToUpperCamel}}
+		opts := &{{$CommandName}}Options{
+			{{if $command.opts.has_expire}} Expire: binary.BigEndian.Uint32(extras[{{or $op.request.has_expire.offset "\"<NULL>\""}}:]), {{end}}
+			{{if $command.opts.has_cas}} Cas: header.cas, {{end}}
+			{{range $key, $value := $op.request.opts.extra}}
+				{{$key | snakeToUpperCamel}}: {{$value}},
+			{{end}}
+		}
+		{{if $command.returns.has_key}}rkey, {{end}}{{if $command.returns.has_value}}rvalue, {{end}}{{if $command.returns.has_flags}}rflags, {{end}}{{if $command.returns.has_cas}}rcas, {{end}}rerr := cli.{{$CommandName}}({{if $command.args.has_key}}key, {{end}}{{if $command.args.has_value}}value, {{end}}{{range $arg := $op.request.args.extra}}{{$arg}}, {{end}}opts)
+	{{end}}{{end}}
 
-	return command, nil
+
+	return nil, nil
 }
 {{end}}

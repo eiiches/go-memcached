@@ -9,41 +9,41 @@ import "os"
 import "fmt"
 import "encoding/binary"
 
-type parseRequestFunc func(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error)
+type binaryRequestHandler func(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error)
 
-func parseRequestFuncTable() []parseRequestFunc {
-	return []parseRequestFunc{
-		parseGetRequest,         // 0
-		parseSetRequest,         // 1
-		parseAddRequest,         // 2
-		parseReplaceRequest,     // 3
-		parseDeleteRequest,      // 4
-		parseIncrementRequest,   // 5
-		parseDecrementRequest,   // 6
-		parseQuitRequest,        // 7
-		parseFlushRequest,       // 8
-		parseGetQRequest,        // 9
-		parseNopRequest,         // 10
-		parseVersionRequest,     // 11
-		parseGetWithKeyRequest,  // 12
-		parseGetWithKeyQRequest, // 13
-		parseAppendRequest,      // 14
-		parsePrependRequest,     // 15
-		parseStatRequest,        // 16
-		parseSetQRequest,        // 17
-		parseAddQRequest,        // 18
-		parseReplaceQRequest,    // 19
-		parseDeleteQRequest,     // 20
-		parseIncrementQRequest,  // 21
-		parseDecrementQRequest,  // 22
-		parseQuitQRequest,       // 23
-		parseFlushQRequest,      // 24
-		parseAppendQRequest,     // 25
-		parsePrependQRequest,    // 26
+func binaryRequestHandlerTable() []binaryRequestHandler {
+	return []binaryRequestHandler{
+		handleGetRequest,         // 0
+		handleSetRequest,         // 1
+		handleAddRequest,         // 2
+		handleReplaceRequest,     // 3
+		handleDeleteRequest,      // 4
+		handleIncrementRequest,   // 5
+		handleDecrementRequest,   // 6
+		handleQuitRequest,        // 7
+		handleFlushRequest,       // 8
+		handleGetQRequest,        // 9
+		handleNopRequest,         // 10
+		handleVersionRequest,     // 11
+		handleGetWithKeyRequest,  // 12
+		handleGetWithKeyQRequest, // 13
+		handleAppendRequest,      // 14
+		handlePrependRequest,     // 15
+		handleStatRequest,        // 16
+		handleSetQRequest,        // 17
+		handleAddQRequest,        // 18
+		handleReplaceQRequest,    // 19
+		handleDeleteQRequest,     // 20
+		handleIncrementQRequest,  // 21
+		handleDecrementQRequest,  // 22
+		handleQuitQRequest,       // 23
+		handleFlushQRequest,      // 24
+		handleAppendQRequest,     // 25
+		handlePrependQRequest,    // 26
 	}
 }
 
-func parseGetRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func handleGetRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("Get MUST have key")
 	}
@@ -56,12 +56,13 @@ func parseGetRequest(header *binaryRequestHeader, key []byte, value []byte, extr
 		return nil, fmt.Errorf("Get MUST NOT have extras")
 	}
 
-	command := Get(key)
+	opts := &GetOptions{}
+	rvalue, rflags, rcas, rerr := cli.Get(key, opts)
 
-	return command, nil
+	return nil, nil
 }
 
-func parseSetRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func handleSetRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("Set MUST have key")
 	}
@@ -80,16 +81,16 @@ func parseSetRequest(header *binaryRequestHeader, key []byte, value []byte, extr
 		// return nil, fmt.Errorf("Invalid magic for Set: %+v", magic)
 	}
 
-	command := Set(key, value)
+	opts := &SetOptions{
+		Expire: binary.BigEndian.Uint32(extras[4:]),
+		Cas:    header.cas,
+	}
+	rcas, rerr := cli.Set(key, value, opts)
 
-	command.WithExpire(binary.BigEndian.Uint32(extras[4:]))
-
-	command.WithCas(header.cas)
-
-	return command, nil
+	return nil, nil
 }
 
-func parseAddRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func handleAddRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("Add MUST have key")
 	}
@@ -108,16 +109,16 @@ func parseAddRequest(header *binaryRequestHeader, key []byte, value []byte, extr
 		// return nil, fmt.Errorf("Invalid magic for Add: %+v", magic)
 	}
 
-	command := Add(key, value)
+	opts := &AddOptions{
+		Expire: binary.BigEndian.Uint32(extras[4:]),
+		Cas:    header.cas,
+	}
+	rcas, rerr := cli.Add(key, value, opts)
 
-	command.WithExpire(binary.BigEndian.Uint32(extras[4:]))
-
-	command.WithCas(header.cas)
-
-	return command, nil
+	return nil, nil
 }
 
-func parseReplaceRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func handleReplaceRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("Replace MUST have key")
 	}
@@ -136,16 +137,16 @@ func parseReplaceRequest(header *binaryRequestHeader, key []byte, value []byte, 
 		// return nil, fmt.Errorf("Invalid magic for Replace: %+v", magic)
 	}
 
-	command := Replace(key, value)
+	opts := &ReplaceOptions{
+		Expire: binary.BigEndian.Uint32(extras[4:]),
+		Cas:    header.cas,
+	}
+	rcas, rerr := cli.Replace(key, value, opts)
 
-	command.WithExpire(binary.BigEndian.Uint32(extras[4:]))
-
-	command.WithCas(header.cas)
-
-	return command, nil
+	return nil, nil
 }
 
-func parseDeleteRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func handleDeleteRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("Delete MUST have key")
 	}
@@ -158,14 +159,16 @@ func parseDeleteRequest(header *binaryRequestHeader, key []byte, value []byte, e
 		return nil, fmt.Errorf("Delete MUST NOT have extras")
 	}
 
-	command := Delete(key)
+	opts := &DeleteOptions{
 
-	command.WithCas(header.cas)
+		Cas: header.cas,
+	}
+	rerr := cli.Delete(key, opts)
 
-	return command, nil
+	return nil, nil
 }
 
-func parseIncrementRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func handleIncrementRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("Increment MUST have key")
 	}
@@ -182,16 +185,16 @@ func parseIncrementRequest(header *binaryRequestHeader, key []byte, value []byte
 
 	initial := binary.BigEndian.Uint64(extras[8:])
 
-	command := Increment(key, amount, initial)
+	opts := &IncrementOptions{
+		Expire: binary.BigEndian.Uint32(extras[16:]),
+		Cas:    header.cas,
+	}
+	rvalue, rcas, rerr := cli.Increment(key, amount, initial, opts)
 
-	command.WithExpire(binary.BigEndian.Uint32(extras[16:]))
-
-	command.WithCas(header.cas)
-
-	return command, nil
+	return nil, nil
 }
 
-func parseDecrementRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func handleDecrementRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("Decrement MUST have key")
 	}
@@ -208,16 +211,16 @@ func parseDecrementRequest(header *binaryRequestHeader, key []byte, value []byte
 
 	initial := binary.BigEndian.Uint64(extras[8:])
 
-	command := Decrement(key, amount, initial)
+	opts := &DecrementOptions{
+		Expire: binary.BigEndian.Uint32(extras[16:]),
+		Cas:    header.cas,
+	}
+	rvalue, rcas, rerr := cli.Decrement(key, amount, initial, opts)
 
-	command.WithExpire(binary.BigEndian.Uint32(extras[16:]))
-
-	command.WithCas(header.cas)
-
-	return command, nil
+	return nil, nil
 }
 
-func parseQuitRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func handleQuitRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) > 0 {
 		return nil, fmt.Errorf("Quit MUST NOT have key")
 	}
@@ -230,12 +233,13 @@ func parseQuitRequest(header *binaryRequestHeader, key []byte, value []byte, ext
 		return nil, fmt.Errorf("Quit MUST NOT have extras")
 	}
 
-	command := quit()
+	opts := &QuitOptions{}
+	rerr := cli.Quit(opts)
 
-	return command, nil
+	return nil, nil
 }
 
-func parseFlushRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func handleFlushRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) > 0 {
 		return nil, fmt.Errorf("Flush MUST NOT have key")
 	}
@@ -248,12 +252,13 @@ func parseFlushRequest(header *binaryRequestHeader, key []byte, value []byte, ex
 		return nil, fmt.Errorf("Flush MUST NOT have extras")
 	}
 
-	command := Flush()
+	opts := &FlushOptions{}
+	rerr := cli.Flush(opts)
 
-	return command, nil
+	return nil, nil
 }
 
-func parseGetQRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func handleGetQRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("GetQ MUST have key")
 	}
@@ -266,14 +271,16 @@ func parseGetQRequest(header *binaryRequestHeader, key []byte, value []byte, ext
 		return nil, fmt.Errorf("GetQ MUST NOT have extras")
 	}
 
-	command := Get(key)
+	opts := &GetOptions{
 
-	command.WithQuiet(true)
+		Quiet: true,
+	}
+	rvalue, rflags, rcas, rerr := cli.Get(key, opts)
 
-	return command, nil
+	return nil, nil
 }
 
-func parseNopRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func handleNopRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) > 0 {
 		return nil, fmt.Errorf("Nop MUST NOT have key")
 	}
@@ -286,12 +293,13 @@ func parseNopRequest(header *binaryRequestHeader, key []byte, value []byte, extr
 		return nil, fmt.Errorf("Nop MUST NOT have extras")
 	}
 
-	command := nop()
+	opts := &NopOptions{}
+	rerr := cli.Nop(opts)
 
-	return command, nil
+	return nil, nil
 }
 
-func parseVersionRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func handleVersionRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) > 0 {
 		return nil, fmt.Errorf("Version MUST NOT have key")
 	}
@@ -304,12 +312,13 @@ func parseVersionRequest(header *binaryRequestHeader, key []byte, value []byte, 
 		return nil, fmt.Errorf("Version MUST NOT have extras")
 	}
 
-	command := version()
+	opts := &VersionOptions{}
+	rerr := cli.Version(opts)
 
-	return command, nil
+	return nil, nil
 }
 
-func parseGetWithKeyRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func handleGetWithKeyRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("GetWithKey MUST have key")
 	}
@@ -322,12 +331,13 @@ func parseGetWithKeyRequest(header *binaryRequestHeader, key []byte, value []byt
 		return nil, fmt.Errorf("GetWithKey MUST NOT have extras")
 	}
 
-	command := GetWithKey(key)
+	opts := &GetWithKeyOptions{}
+	rkey, rvalue, rflags, rcas, rerr := cli.GetWithKey(key, opts)
 
-	return command, nil
+	return nil, nil
 }
 
-func parseGetWithKeyQRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func handleGetWithKeyQRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("GetWithKeyQ MUST have key")
 	}
@@ -340,14 +350,16 @@ func parseGetWithKeyQRequest(header *binaryRequestHeader, key []byte, value []by
 		return nil, fmt.Errorf("GetWithKeyQ MUST NOT have extras")
 	}
 
-	command := GetWithKey(key)
+	opts := &GetWithKeyOptions{
 
-	command.WithQuiet(true)
+		Quiet: true,
+	}
+	rkey, rvalue, rflags, rcas, rerr := cli.GetWithKey(key, opts)
 
-	return command, nil
+	return nil, nil
 }
 
-func parseAppendRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func handleAppendRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("Append MUST have key")
 	}
@@ -360,12 +372,16 @@ func parseAppendRequest(header *binaryRequestHeader, key []byte, value []byte, e
 		return nil, fmt.Errorf("Append MUST NOT have extras")
 	}
 
-	command := Append(key, value)
+	opts := &AppendOptions{
 
-	return command, nil
+		Cas: header.cas,
+	}
+	rerr := cli.Append(key, value, opts)
+
+	return nil, nil
 }
 
-func parsePrependRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func handlePrependRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("Prepend MUST have key")
 	}
@@ -378,12 +394,16 @@ func parsePrependRequest(header *binaryRequestHeader, key []byte, value []byte, 
 		return nil, fmt.Errorf("Prepend MUST NOT have extras")
 	}
 
-	command := Prepend(key, value)
+	opts := &PrependOptions{
 
-	return command, nil
+		Cas: header.cas,
+	}
+	rerr := cli.Prepend(key, value, opts)
+
+	return nil, nil
 }
 
-func parseStatRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func handleStatRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) > 0 {
 		return nil, fmt.Errorf("Stat MUST NOT have key")
 	}
@@ -396,12 +416,13 @@ func parseStatRequest(header *binaryRequestHeader, key []byte, value []byte, ext
 		return nil, fmt.Errorf("Stat MUST NOT have extras")
 	}
 
-	command := stat()
+	opts := &StatOptions{}
+	rerr := cli.Stat(opts)
 
-	return command, nil
+	return nil, nil
 }
 
-func parseSetQRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func handleSetQRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("SetQ MUST have key")
 	}
@@ -414,14 +435,18 @@ func parseSetQRequest(header *binaryRequestHeader, key []byte, value []byte, ext
 		return nil, fmt.Errorf("SetQ MUST NOT have extras")
 	}
 
-	command := Set(key, value)
+	opts := &SetOptions{
+		Expire: binary.BigEndian.Uint32(extras[4:]),
+		Cas:    header.cas,
 
-	command.WithQuiet(true)
+		Quiet: true,
+	}
+	rcas, rerr := cli.Set(key, value, opts)
 
-	return command, nil
+	return nil, nil
 }
 
-func parseAddQRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func handleAddQRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("AddQ MUST have key")
 	}
@@ -440,18 +465,18 @@ func parseAddQRequest(header *binaryRequestHeader, key []byte, value []byte, ext
 		// return nil, fmt.Errorf("Invalid magic for AddQ: %+v", magic)
 	}
 
-	command := Add(key, value)
+	opts := &AddOptions{
+		Expire: binary.BigEndian.Uint32(extras[4:]),
+		Cas:    header.cas,
 
-	command.WithExpire(binary.BigEndian.Uint32(extras[4:]))
+		Quiet: true,
+	}
+	rcas, rerr := cli.Add(key, value, opts)
 
-	command.WithCas(header.cas)
-
-	command.WithQuiet(true)
-
-	return command, nil
+	return nil, nil
 }
 
-func parseReplaceQRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func handleReplaceQRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("ReplaceQ MUST have key")
 	}
@@ -470,18 +495,18 @@ func parseReplaceQRequest(header *binaryRequestHeader, key []byte, value []byte,
 		// return nil, fmt.Errorf("Invalid magic for ReplaceQ: %+v", magic)
 	}
 
-	command := Replace(key, value)
+	opts := &ReplaceOptions{
+		Expire: binary.BigEndian.Uint32(extras[4:]),
+		Cas:    header.cas,
 
-	command.WithExpire(binary.BigEndian.Uint32(extras[4:]))
+		Quiet: true,
+	}
+	rcas, rerr := cli.Replace(key, value, opts)
 
-	command.WithCas(header.cas)
-
-	command.WithQuiet(true)
-
-	return command, nil
+	return nil, nil
 }
 
-func parseDeleteQRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func handleDeleteQRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("DeleteQ MUST have key")
 	}
@@ -494,14 +519,18 @@ func parseDeleteQRequest(header *binaryRequestHeader, key []byte, value []byte, 
 		return nil, fmt.Errorf("DeleteQ MUST NOT have extras")
 	}
 
-	command := Delete(key)
+	opts := &DeleteOptions{
 
-	command.WithQuiet(true)
+		Cas: header.cas,
 
-	return command, nil
+		Quiet: true,
+	}
+	rerr := cli.Delete(key, opts)
+
+	return nil, nil
 }
 
-func parseIncrementQRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func handleIncrementQRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("IncrementQ MUST have key")
 	}
@@ -518,16 +547,18 @@ func parseIncrementQRequest(header *binaryRequestHeader, key []byte, value []byt
 
 	initial := binary.BigEndian.Uint64(extras[8:])
 
-	command := Increment(key, amount, initial)
+	opts := &IncrementOptions{
+		Expire: binary.BigEndian.Uint32(extras[16:]),
+		Cas:    header.cas,
 
-	command.WithCas(header.cas)
+		Quiet: true,
+	}
+	rvalue, rcas, rerr := cli.Increment(key, amount, initial, opts)
 
-	command.WithQuiet(true)
-
-	return command, nil
+	return nil, nil
 }
 
-func parseDecrementQRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func handleDecrementQRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("DecrementQ MUST have key")
 	}
@@ -544,16 +575,18 @@ func parseDecrementQRequest(header *binaryRequestHeader, key []byte, value []byt
 
 	initial := binary.BigEndian.Uint64(extras[8:])
 
-	command := Decrement(key, amount, initial)
+	opts := &DecrementOptions{
+		Expire: binary.BigEndian.Uint32(extras[16:]),
+		Cas:    header.cas,
 
-	command.WithCas(header.cas)
+		Quiet: true,
+	}
+	rvalue, rcas, rerr := cli.Decrement(key, amount, initial, opts)
 
-	command.WithQuiet(true)
-
-	return command, nil
+	return nil, nil
 }
 
-func parseQuitQRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func handleQuitQRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) > 0 {
 		return nil, fmt.Errorf("QuitQ MUST NOT have key")
 	}
@@ -566,14 +599,16 @@ func parseQuitQRequest(header *binaryRequestHeader, key []byte, value []byte, ex
 		return nil, fmt.Errorf("QuitQ MUST NOT have extras")
 	}
 
-	command := quit()
+	opts := &QuitOptions{
 
-	command.WithQuiet(true)
+		Quiet: true,
+	}
+	rerr := cli.Quit(opts)
 
-	return command, nil
+	return nil, nil
 }
 
-func parseFlushQRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func handleFlushQRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) > 0 {
 		return nil, fmt.Errorf("FlushQ MUST NOT have key")
 	}
@@ -586,14 +621,16 @@ func parseFlushQRequest(header *binaryRequestHeader, key []byte, value []byte, e
 		return nil, fmt.Errorf("FlushQ MUST NOT have extras")
 	}
 
-	command := Flush()
+	opts := &FlushOptions{
 
-	command.WithQuiet(true)
+		Quiet: true,
+	}
+	rerr := cli.Flush(opts)
 
-	return command, nil
+	return nil, nil
 }
 
-func parseAppendQRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func handleAppendQRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("AppendQ MUST have key")
 	}
@@ -606,14 +643,18 @@ func parseAppendQRequest(header *binaryRequestHeader, key []byte, value []byte, 
 		return nil, fmt.Errorf("AppendQ MUST NOT have extras")
 	}
 
-	command := Append(key, value)
+	opts := &AppendOptions{
 
-	command.WithQuiet(true)
+		Cas: header.cas,
 
-	return command, nil
+		Quiet: true,
+	}
+	rerr := cli.Append(key, value, opts)
+
+	return nil, nil
 }
 
-func parsePrependQRequest(header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func handlePrependQRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("PrependQ MUST have key")
 	}
@@ -626,9 +667,13 @@ func parsePrependQRequest(header *binaryRequestHeader, key []byte, value []byte,
 		return nil, fmt.Errorf("PrependQ MUST NOT have extras")
 	}
 
-	command := Prepend(key, value)
+	opts := &PrependOptions{
 
-	command.WithQuiet(true)
+		Cas: header.cas,
 
-	return command, nil
+		Quiet: true,
+	}
+	rerr := cli.Prepend(key, value, opts)
+
+	return nil, nil
 }

@@ -1,3 +1,8 @@
+.PHONY: rebuild
+rebuild:
+	make clean
+	make all
+
 .PHONY: all
 all: memcached memcached-cli
 
@@ -17,7 +22,7 @@ memcached-cli: $(sources) memcached-cli.go
 
 .PHONY: clean
 clean:
-	$(RM) src/memcached/commands.go src/memcached/proto_binary_commands.go memcached memcached-cli
+	$(RM) src/memcached/iface.go src/memcached/commands.go src/memcached/proto_binary_commands.go memcached memcached-cli
 
 mix: export GOPATH = $(gopath)
 mix: $(sources) mix.go
