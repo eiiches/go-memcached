@@ -1,0 +1,115 @@
+// +build !generate
+
+package memcached
+
+import "io"
+import "fmt"
+import "encoding/binary"
+
+func sendRequest(cli *MemcachedClient, header *binaryRequestHeader, key []byte, value []byte, extra []byte) {
+	var buf [BINARY_HEADER_BYTES]byte
+	header.write(buf[:])
+
+	cli.conn.Write(buf[:])
+	if key != nil {
+		cli.conn.Write(key)
+	}
+	if value != nil {
+		cli.conn.Write(value)
+	}
+	if extra != nil {
+		cli.conn.Write(extra)
+	}
+}
+
+func recvResponse(cli *MemcachedClient) (*binaryResponseHeader, []byte, []byte, []byte, error) {
+	var header binaryResponseHeader
+	var headerBuf [BINARY_HEADER_BYTES]byte
+
+	if _, err := io.ReadFull(cli.conn, headerBuf[:]); err != nil {
+		return nil, nil, nil, nil, err
+	}
+
+	header.read(headerBuf[:])
+	if header.magic != BINARY_MAGIC_RESPONSE {
+		return nil, nil, nil, nil, fmt.Errorf("invalid magic %+v", header.magic)
+	}
+
+	bodyBuf := make([]byte, header.totalBodyLength)
+	if _, err := io.ReadFull(cli.conn, bodyBuf); err != nil {
+		return nil, nil, nil, nil, err
+	}
+
+	offset := 0
+	extras := bodyBuf[offset : offset+int(header.extrasLength)]
+	offset += int(header.extrasLength)
+	key := bodyBuf[offset : offset+int(header.keyLength)]
+	offset += int(header.keyLength)
+	value := bodyBuf[offset:header.totalBodyLength]
+
+	return &header, key, value, extras, nil
+}
+
+{{range $command := .commands}}{{with $Name := $command.name | snakeToUpperCamel}}
+	func (cli *MemcachedClient) {{$Name}}({{if $command.args.has_key}}key []byte, {{end}}{{if $command.args.has_value}}value []byte, {{end}}{{range $arg := $command.args.extra}}{{$arg.name}} {{$arg.type}}, {{end}}opts *{{$Name}}Options) ({{if $command.returns.has_key}}[]byte, {{end}}{{if $command.returns.has_value}}[]byte, {{end}}{{if $command.returns.has_flags}}uint32, {{end}}{{if $command.returns.has_cas}}uint64, {{end}}error) {
+		theader, tkey, tvalue, textra := format{{$Name}}Request({{if $command.args.has_key}}key, {{end}}{{if $command.args.has_value}}value, {{end}}{{range $arg := $command.args.extra}}{{$arg.name}}, {{end}}opts)
+		sendRequest(cli, theader, tkey, tvalue, textra)
+		rheader, rkey, rvalue, rextra, rerr := recvResponse(cli)
+		if rerr != nil {
+			return {{if $command.returns.has_key}}nil, {{end}}{{if $command.returns.has_value}}nil, {{end}}{{if $command.returns.has_flags}}0, {{end}}{{if $command.returns.has_cas}}0, {{end}}rerr
+		}
+		return parse{{$Name}}Response(rheader, rkey, rvalue, rextra)
+	}
+{{end}}{{end}}
+
+
+{{range $op := .bin_ops}}
+	{{with $command := $op.command}}{{with $CommandName := $command.name | snakeToUpperCamel}}
+		func format{{$op.name}}Request({{if $command.args.has_key}}key []byte, {{end}}{{if $command.args.has_value}}value []byte, {{end}}{{range $arg := $command.args.extra}}{{$arg.name}} {{$arg.type}}, {{end}}opts *{{$CommandName}}Options) (*binaryRequestHeader, []byte, []byte, []byte) {
+
+			{{if $command.opts.has_flags}}flags := opts.Flags{{end}}
+			{{if $command.opts.has_cas}}cas := opts.Cas{{end}}
+			{{if $command.opts.has_expire}}expire := opts.Expire{{end}}
+
+			{{if $op.request.extra_length}}
+				{{if gt $op.request.extra_length 0}}
+					const extralen = {{$op.request.extra_length}}
+					var extrabuf [extralen]byte
+					{{range $extra := $op.request.extra}}
+						binary.BigEndian.Put{{$extra.type | lowerToUpperCamel}}(extrabuf[{{$extra.offset}}:], {{$extra.name}})
+					{{end}}
+				{{else}}
+					const extralen = 0
+				{{end}}
+			{{else}}
+				const extralen = 0
+			{{end}}
+
+			header := &binaryRequestHeader{
+				magic: BINARY_MAGIC_REQUEST,
+				opcode: {{$op.opcode}},
+				{{if $command.args.has_key}}keyLength: uint16(len(key)),{{end}}
+				extrasLength: extralen,
+				totalBodyLength: uint32(extralen{{if $command.args.has_key}} + len(key){{end}}{{if $command.args.has_value}} + len(value){{end}}),
+				{{if $command.opts.has_cas}}cas: cas,{{end}}
+			}
+			return header, {{if $command.args.has_key}}key{{else}}nil{{end}}, {{if $command.args.has_value}}value{{else}}nil{{end}}, {{if $op.request.extra_length}}{{if gt $op.request.extra_length 0}}extrabuf[:]{{else}}nil{{end}}{{else}}nil{{end}}
+		}
+
+		func parse{{$op.name}}Response(header *binaryResponseHeader, key []byte, value []byte, extra[]byte) ({{if $command.returns.has_key}}[]byte, {{end}}{{if $command.returns.has_value}}[]byte, {{end}}{{if $command.returns.has_flags}}uint32, {{end}}{{if $command.returns.has_cas}}uint64, {{end}}*MemcachedError) {
+
+			{{if $command.returns.has_cas}}rcas := header.cas{{end}}
+
+			{{if $op.response.extra_length}}
+				{{if gt $op.response.extra_length 0}}
+					{{range $extra := $op.response.extra}}
+						{{$extra.name}} := binary.BigEndian.{{$extra.type | lowerToUpperCamel}}(extra[{{$extra.offset}}:])
+					{{end}}
+				{{end}}
+			{{end}}
+
+			return {{if $command.returns.has_key}}key, {{end}}{{if $command.returns.has_value}}value, {{end}}{{if $command.returns.has_flags}}rflags, {{end}}{{if $command.returns.has_cas}}rcas, {{end}}nil
+
+		}
+	{{end}}{{end}}
+{{end}}

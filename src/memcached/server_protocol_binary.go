@@ -11,65 +11,13 @@ import "fmt"
 import "net"
 import "encoding/binary"
 
-const MAGIC_REQUEST = 0x80
-const MAGIC_RESPONSE = 0x81
-const HEADER_BYTES = 24
-
-type binaryResponseHeader struct {
-	magic           uint8
-	opcode          uint8
-	keyLength       uint16
-	extrasLength    uint8
-	dataType        uint8
-	status          uint16
-	totalBodyLength uint32
-	opaque          uint32
-	cas             uint64
-}
-
-func (header *binaryResponseHeader) write(buf []byte) {
-	buf[0] = header.magic
-	buf[1] = header.opcode
-	binary.BigEndian.PutUint16(buf[2:], header.keyLength)
-	buf[4] = header.extrasLength
-	buf[5] = header.dataType
-	binary.BigEndian.PutUint16(buf[6:], header.status)
-	binary.BigEndian.PutUint32(buf[8:], header.totalBodyLength)
-	binary.BigEndian.PutUint32(buf[12:], header.opaque)
-	binary.BigEndian.PutUint64(buf[16:], header.cas)
-}
-
-type binaryRequestHeader struct {
-	magic           uint8
-	opcode          uint8
-	keyLength       uint16
-	extrasLength    uint8
-	dataType        uint8
-	reserved        uint16
-	totalBodyLength uint32
-	opaque          uint32
-	cas             uint64
-}
-
-func (header *binaryRequestHeader) read(buf []byte) {
-	header.magic = buf[0]
-	header.opcode = buf[1]
-	header.keyLength = binary.BigEndian.Uint16(buf[2:])
-	header.extrasLength = buf[4]
-	header.dataType = buf[5]
-	header.reserved = binary.BigEndian.Uint16(buf[6:])
-	header.totalBodyLength = binary.BigEndian.Uint32(buf[8:])
-	header.opaque = binary.BigEndian.Uint32(buf[12:])
-	header.cas = binary.BigEndian.Uint64(buf[16:])
-}
-
 type binaryProtocolHandler struct {
 	handlers []binaryRequestHandler
 }
 
 func (self binaryProtocolHandler) handleConnection(conn net.Conn, server *MemcachedServer) error {
 	var header binaryRequestHeader
-	var headerBuf [HEADER_BYTES]byte
+	var headerBuf [BINARY_HEADER_BYTES]byte
 	for {
 		if _, err := io.ReadFull(conn, headerBuf[:]); err != nil {
 			fmt.Fprintf(os.Stderr, "error: %+v\n", err)
@@ -77,7 +25,7 @@ func (self binaryProtocolHandler) handleConnection(conn net.Conn, server *Memcac
 		}
 
 		header.read(headerBuf[:])
-		if header.magic != MAGIC_REQUEST {
+		if header.magic != BINARY_MAGIC_REQUEST {
 			return fmt.Errorf("invalid magic %+v", header.magic)
 		}
 
@@ -104,7 +52,7 @@ func (self binaryProtocolHandler) handleConnection(conn net.Conn, server *Memcac
 		rheader, rkey, rvalue, rextras := self.handlers[header.opcode](server, &header, key, value, extras)
 		fmt.Fprintf(os.Stderr, "response: header = %+v, key = %+v, value = %+v, extras = %+v\n", rheader, rkey, rvalue, rextras)
 
-		var rbuf [HEADER_BYTES]byte
+		var rbuf [BINARY_HEADER_BYTES]byte
 		rheader.write(rbuf[:])
 
 		conn.Write(rbuf[:])
@@ -191,7 +139,7 @@ func binaryRequestHandlerTable() []binaryRequestHandler {
 
 func binaryErrorResponse(header *binaryRequestHeader, err *MemcachedError) (*binaryResponseHeader, []byte, []byte, []byte) {
 	return &binaryResponseHeader{
-		magic:  MAGIC_RESPONSE,
+		magic:  BINARY_MAGIC_RESPONSE,
 		opaque: header.opaque,
 		opcode: header.opcode,
 		status: err.ErrorCode(),
@@ -225,7 +173,7 @@ func handleGetRequest(cli Memcached, header *binaryRequestHeader, key []byte, va
 	binary.BigEndian.PutUint32(rextrabuf[0:], rflags)
 
 	rheader := &binaryResponseHeader{
-		magic:  MAGIC_RESPONSE,
+		magic:  BINARY_MAGIC_RESPONSE,
 		opaque: header.opaque,
 		opcode: header.opcode,
 
@@ -271,7 +219,7 @@ func handleSetRequest(cli Memcached, header *binaryRequestHeader, key []byte, va
 	const rextralen = 0
 
 	rheader := &binaryResponseHeader{
-		magic:  MAGIC_RESPONSE,
+		magic:  BINARY_MAGIC_RESPONSE,
 		opaque: header.opaque,
 		opcode: header.opcode,
 
@@ -317,7 +265,7 @@ func handleAddRequest(cli Memcached, header *binaryRequestHeader, key []byte, va
 	const rextralen = 0
 
 	rheader := &binaryResponseHeader{
-		magic:  MAGIC_RESPONSE,
+		magic:  BINARY_MAGIC_RESPONSE,
 		opaque: header.opaque,
 		opcode: header.opcode,
 
@@ -363,7 +311,7 @@ func handleReplaceRequest(cli Memcached, header *binaryRequestHeader, key []byte
 	const rextralen = 0
 
 	rheader := &binaryResponseHeader{
-		magic:  MAGIC_RESPONSE,
+		magic:  BINARY_MAGIC_RESPONSE,
 		opaque: header.opaque,
 		opcode: header.opcode,
 
@@ -404,7 +352,7 @@ func handleDeleteRequest(cli Memcached, header *binaryRequestHeader, key []byte,
 	const rextralen = 0
 
 	rheader := &binaryResponseHeader{
-		magic:  MAGIC_RESPONSE,
+		magic:  BINARY_MAGIC_RESPONSE,
 		opaque: header.opaque,
 		opcode: header.opcode,
 
@@ -450,7 +398,7 @@ func handleIncrementRequest(cli Memcached, header *binaryRequestHeader, key []by
 	const rextralen = 0
 
 	rheader := &binaryResponseHeader{
-		magic:  MAGIC_RESPONSE,
+		magic:  BINARY_MAGIC_RESPONSE,
 		opaque: header.opaque,
 		opcode: header.opcode,
 
@@ -497,7 +445,7 @@ func handleDecrementRequest(cli Memcached, header *binaryRequestHeader, key []by
 	const rextralen = 0
 
 	rheader := &binaryResponseHeader{
-		magic:  MAGIC_RESPONSE,
+		magic:  BINARY_MAGIC_RESPONSE,
 		opaque: header.opaque,
 		opcode: header.opcode,
 
@@ -535,7 +483,7 @@ func handleQuitRequest(cli Memcached, header *binaryRequestHeader, key []byte, v
 	const rextralen = 0
 
 	rheader := &binaryResponseHeader{
-		magic:  MAGIC_RESPONSE,
+		magic:  BINARY_MAGIC_RESPONSE,
 		opaque: header.opaque,
 		opcode: header.opcode,
 
@@ -572,7 +520,7 @@ func handleFlushRequest(cli Memcached, header *binaryRequestHeader, key []byte, 
 	const rextralen = 0
 
 	rheader := &binaryResponseHeader{
-		magic:  MAGIC_RESPONSE,
+		magic:  BINARY_MAGIC_RESPONSE,
 		opaque: header.opaque,
 		opcode: header.opcode,
 
@@ -615,7 +563,7 @@ func handleGetQRequest(cli Memcached, header *binaryRequestHeader, key []byte, v
 	binary.BigEndian.PutUint32(rextrabuf[0:], rflags)
 
 	rheader := &binaryResponseHeader{
-		magic:  MAGIC_RESPONSE,
+		magic:  BINARY_MAGIC_RESPONSE,
 		opaque: header.opaque,
 		opcode: header.opcode,
 
@@ -653,7 +601,7 @@ func handleNopRequest(cli Memcached, header *binaryRequestHeader, key []byte, va
 	const rextralen = 0
 
 	rheader := &binaryResponseHeader{
-		magic:  MAGIC_RESPONSE,
+		magic:  BINARY_MAGIC_RESPONSE,
 		opaque: header.opaque,
 		opcode: header.opcode,
 
@@ -690,7 +638,7 @@ func handleVersionRequest(cli Memcached, header *binaryRequestHeader, key []byte
 	const rextralen = 0
 
 	rheader := &binaryResponseHeader{
-		magic:  MAGIC_RESPONSE,
+		magic:  BINARY_MAGIC_RESPONSE,
 		opaque: header.opaque,
 		opcode: header.opcode,
 
@@ -730,7 +678,7 @@ func handleGetWithKeyRequest(cli Memcached, header *binaryRequestHeader, key []b
 	binary.BigEndian.PutUint32(rextrabuf[0:], rflags)
 
 	rheader := &binaryResponseHeader{
-		magic:           MAGIC_RESPONSE,
+		magic:           BINARY_MAGIC_RESPONSE,
 		opaque:          header.opaque,
 		opcode:          header.opcode,
 		keyLength:       uint16(len(rkey)),
@@ -774,7 +722,7 @@ func handleGetWithKeyQRequest(cli Memcached, header *binaryRequestHeader, key []
 	binary.BigEndian.PutUint32(rextrabuf[0:], rflags)
 
 	rheader := &binaryResponseHeader{
-		magic:           MAGIC_RESPONSE,
+		magic:           BINARY_MAGIC_RESPONSE,
 		opaque:          header.opaque,
 		opcode:          header.opcode,
 		keyLength:       uint16(len(rkey)),
@@ -815,7 +763,7 @@ func handleAppendRequest(cli Memcached, header *binaryRequestHeader, key []byte,
 	const rextralen = 0
 
 	rheader := &binaryResponseHeader{
-		magic:  MAGIC_RESPONSE,
+		magic:  BINARY_MAGIC_RESPONSE,
 		opaque: header.opaque,
 		opcode: header.opcode,
 
@@ -855,7 +803,7 @@ func handlePrependRequest(cli Memcached, header *binaryRequestHeader, key []byte
 	const rextralen = 0
 
 	rheader := &binaryResponseHeader{
-		magic:  MAGIC_RESPONSE,
+		magic:  BINARY_MAGIC_RESPONSE,
 		opaque: header.opaque,
 		opcode: header.opcode,
 
@@ -892,7 +840,7 @@ func handleStatRequest(cli Memcached, header *binaryRequestHeader, key []byte, v
 	const rextralen = 0
 
 	rheader := &binaryResponseHeader{
-		magic:  MAGIC_RESPONSE,
+		magic:  BINARY_MAGIC_RESPONSE,
 		opaque: header.opaque,
 		opcode: header.opcode,
 
@@ -939,7 +887,7 @@ func handleSetQRequest(cli Memcached, header *binaryRequestHeader, key []byte, v
 	const rextralen = 0
 
 	rheader := &binaryResponseHeader{
-		magic:  MAGIC_RESPONSE,
+		magic:  BINARY_MAGIC_RESPONSE,
 		opaque: header.opaque,
 		opcode: header.opcode,
 
@@ -987,7 +935,7 @@ func handleAddQRequest(cli Memcached, header *binaryRequestHeader, key []byte, v
 	const rextralen = 0
 
 	rheader := &binaryResponseHeader{
-		magic:  MAGIC_RESPONSE,
+		magic:  BINARY_MAGIC_RESPONSE,
 		opaque: header.opaque,
 		opcode: header.opcode,
 
@@ -1035,7 +983,7 @@ func handleReplaceQRequest(cli Memcached, header *binaryRequestHeader, key []byt
 	const rextralen = 0
 
 	rheader := &binaryResponseHeader{
-		magic:  MAGIC_RESPONSE,
+		magic:  BINARY_MAGIC_RESPONSE,
 		opaque: header.opaque,
 		opcode: header.opcode,
 
@@ -1078,7 +1026,7 @@ func handleDeleteQRequest(cli Memcached, header *binaryRequestHeader, key []byte
 	const rextralen = 0
 
 	rheader := &binaryResponseHeader{
-		magic:  MAGIC_RESPONSE,
+		magic:  BINARY_MAGIC_RESPONSE,
 		opaque: header.opaque,
 		opcode: header.opcode,
 
@@ -1126,7 +1074,7 @@ func handleIncrementQRequest(cli Memcached, header *binaryRequestHeader, key []b
 	const rextralen = 0
 
 	rheader := &binaryResponseHeader{
-		magic:  MAGIC_RESPONSE,
+		magic:  BINARY_MAGIC_RESPONSE,
 		opaque: header.opaque,
 		opcode: header.opcode,
 
@@ -1175,7 +1123,7 @@ func handleDecrementQRequest(cli Memcached, header *binaryRequestHeader, key []b
 	const rextralen = 0
 
 	rheader := &binaryResponseHeader{
-		magic:  MAGIC_RESPONSE,
+		magic:  BINARY_MAGIC_RESPONSE,
 		opaque: header.opaque,
 		opcode: header.opcode,
 
@@ -1216,7 +1164,7 @@ func handleQuitQRequest(cli Memcached, header *binaryRequestHeader, key []byte, 
 	const rextralen = 0
 
 	rheader := &binaryResponseHeader{
-		magic:  MAGIC_RESPONSE,
+		magic:  BINARY_MAGIC_RESPONSE,
 		opaque: header.opaque,
 		opcode: header.opcode,
 
@@ -1256,7 +1204,7 @@ func handleFlushQRequest(cli Memcached, header *binaryRequestHeader, key []byte,
 	const rextralen = 0
 
 	rheader := &binaryResponseHeader{
-		magic:  MAGIC_RESPONSE,
+		magic:  BINARY_MAGIC_RESPONSE,
 		opaque: header.opaque,
 		opcode: header.opcode,
 
@@ -1298,7 +1246,7 @@ func handleAppendQRequest(cli Memcached, header *binaryRequestHeader, key []byte
 	const rextralen = 0
 
 	rheader := &binaryResponseHeader{
-		magic:  MAGIC_RESPONSE,
+		magic:  BINARY_MAGIC_RESPONSE,
 		opaque: header.opaque,
 		opcode: header.opcode,
 
@@ -1340,7 +1288,7 @@ func handlePrependQRequest(cli Memcached, header *binaryRequestHeader, key []byt
 	const rextralen = 0
 
 	rheader := &binaryResponseHeader{
-		magic:  MAGIC_RESPONSE,
+		magic:  BINARY_MAGIC_RESPONSE,
 		opaque: header.opaque,
 		opcode: header.opcode,
 
