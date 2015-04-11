@@ -162,8 +162,8 @@ binary_commands:
     response:
       extra_length: 4
       extra:
-        - {offset: 4, type: "Uint32", name: "rflags"}
-    # cas, value, flags
+        - {offset: 0, type: "Uint32", name: "rflags"}
+
   - name: Set
     command: *set
     opcode: 0x01
@@ -247,7 +247,8 @@ binary_commands:
     response:
       extra_length: 4
       extra:
-        - {offset: 4, type: "Uint32", name: "rflags"}
+        - {offset: 0, type: "Uint32", name: "rflags"}
+
   - name: Nop
     opcode: 0x0A
     command: *nop
@@ -265,7 +266,8 @@ binary_commands:
     response:
       extra_length: 4
       extra:
-        - {offset: 4, type: "Uint32", name: "rflags"}
+        - {offset: 0, type: "Uint32", name: "rflags"}
+
   - name: GetWithKeyQ
     command: *get_with_key
     opcode: 0x0D
@@ -278,7 +280,8 @@ binary_commands:
     response:
       extra_length: 4
       extra:
-        - {offset: 4, type: "Uint32", name: "rflags"}
+        - {offset: 0, type: "Uint32", name: "rflags"}
+
   - name: Append
     command: *append
     opcode: 0x0E

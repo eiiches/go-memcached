@@ -98,6 +98,7 @@ func (self binaryProtocolHandler) handleConnection(conn net.Conn, server *Memcac
 		if int(header.opcode) >= len(self.handlers) {
 			return fmt.Errorf("invalid opcode")
 		}
+		fmt.Fprintf(os.Stderr, "request: header = %+v, key = %+v, value = %+v, extras = %+v\n", &header, key, value, extras)
 		rheader, rkey, rvalue, rextras := self.handlers[header.opcode](server, &header, key, value, extras)
 		fmt.Fprintf(os.Stderr, "response: header = %+v, key = %+v, value = %+v, extras = %+v\n", rheader, rkey, rvalue, rextras)
 

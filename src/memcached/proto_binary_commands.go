@@ -76,7 +76,7 @@ func handleGetRequest(cli Memcached, header *binaryRequestHeader, key []byte, va
 
 	var extrabuf [4]byte
 
-	binary.BigEndian.PutUint32(extrabuf[4:], rflags)
+	binary.BigEndian.PutUint32(extrabuf[0:], rflags)
 
 	extralen = 4
 
@@ -91,7 +91,7 @@ func handleGetRequest(cli Memcached, header *binaryRequestHeader, key []byte, va
 		cas:             rcas,
 	}
 
-	return rheader, nil, rvalue, nil
+	return rheader, nil, rvalue, extrabuf[:]
 
 }
 
@@ -459,7 +459,7 @@ func handleGetQRequest(cli Memcached, header *binaryRequestHeader, key []byte, v
 
 	var extrabuf [4]byte
 
-	binary.BigEndian.PutUint32(extrabuf[4:], rflags)
+	binary.BigEndian.PutUint32(extrabuf[0:], rflags)
 
 	extralen = 4
 
@@ -474,7 +474,7 @@ func handleGetQRequest(cli Memcached, header *binaryRequestHeader, key []byte, v
 		cas:             rcas,
 	}
 
-	return rheader, nil, rvalue, nil
+	return rheader, nil, rvalue, extrabuf[:]
 
 }
 
@@ -574,7 +574,7 @@ func handleGetWithKeyRequest(cli Memcached, header *binaryRequestHeader, key []b
 
 	var extrabuf [4]byte
 
-	binary.BigEndian.PutUint32(extrabuf[4:], rflags)
+	binary.BigEndian.PutUint32(extrabuf[0:], rflags)
 
 	extralen = 4
 
@@ -589,7 +589,7 @@ func handleGetWithKeyRequest(cli Memcached, header *binaryRequestHeader, key []b
 		cas:             rcas,
 	}
 
-	return rheader, rkey, rvalue, nil
+	return rheader, rkey, rvalue, extrabuf[:]
 
 }
 
@@ -620,7 +620,7 @@ func handleGetWithKeyQRequest(cli Memcached, header *binaryRequestHeader, key []
 
 	var extrabuf [4]byte
 
-	binary.BigEndian.PutUint32(extrabuf[4:], rflags)
+	binary.BigEndian.PutUint32(extrabuf[0:], rflags)
 
 	extralen = 4
 
@@ -635,7 +635,7 @@ func handleGetWithKeyQRequest(cli Memcached, header *binaryRequestHeader, key []
 		cas:             rcas,
 	}
 
-	return rheader, rkey, rvalue, nil
+	return rheader, rkey, rvalue, extrabuf[:]
 
 }
 

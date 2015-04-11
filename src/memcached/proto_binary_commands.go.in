@@ -96,7 +96,7 @@ func handle{{$op.name}}Request(cli Memcached, header *binaryRequestHeader, key [
 			{{if $command.returns.has_cas}}cas: rcas,{{end}}
 		}
 
-		return rheader, {{if $command.returns.has_key}}rkey{{else}}nil{{end}}, {{if $command.returns.has_value}}rvalue{{else}}nil{{end}}, nil
+		return rheader, {{if $command.returns.has_key}}rkey{{else}}nil{{end}}, {{if $command.returns.has_value}}rvalue{{else}}nil{{end}}, {{if $op.response.extra_length}}{{if gt $op.response.extra_length 0}}extrabuf[:]{{else}}nil{{end}}{{else}}nil{{end}}
 	{{end}}{{end}}
 }
 {{end}}
