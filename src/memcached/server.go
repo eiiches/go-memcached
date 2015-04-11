@@ -21,6 +21,10 @@ func NewMemcachedServer() *MemcachedServer {
 	}
 }
 
+type protocolHandler interface {
+	handleConnection(conn net.Conn, server *MemcachedServer) error
+}
+
 func (self *MemcachedServer) serveLoop(sock net.Listener, handler protocolHandler) {
 	for {
 		conn, err := sock.Accept()
