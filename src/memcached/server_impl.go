@@ -46,7 +46,7 @@ func (self *MemcachedServer) Replace(key []byte, value []byte, opts *ReplaceOpti
 
 func (self *MemcachedServer) Get(key []byte, opts *GetOptions) (value []byte, flags uint32, cas uint64, err *MemcachedError) {
 	rvalue, rcas := self.cache.Get(key)
-	fmt.Fprintf(os.Stderr, "GET %v = %v [cas: %v]\n", string(key), string(value), rcas)
+	fmt.Fprintf(os.Stderr, "GET %v = %v [cas: %v]\n", string(key), string(rvalue), rcas)
 	return rvalue, 0, rcas, nil
 }
 

@@ -20,6 +20,9 @@ func (self binaryProtocolHandler) handleConnection(conn net.Conn, server *Memcac
 	var headerBuf [BINARY_HEADER_BYTES]byte
 	for {
 		if _, err := io.ReadFull(conn, headerBuf[:]); err != nil {
+			if err == io.EOF {
+				break
+			}
 			fmt.Fprintf(os.Stderr, "error: %+v\n", err)
 			return err
 		}
@@ -29,14 +32,10 @@ func (self binaryProtocolHandler) handleConnection(conn net.Conn, server *Memcac
 			return fmt.Errorf("invalid magic %+v", header.magic)
 		}
 
-		fmt.Fprintf(os.Stderr, "header: %+v\n", headerBuf)
-
 		bodyBuf := make([]byte, header.totalBodyLength)
 		if _, err := io.ReadFull(conn, bodyBuf); err != nil {
 			return err
 		}
-
-		fmt.Fprintf(os.Stderr, "body: %+v\n", bodyBuf)
 
 		offset := 0
 		extras := bodyBuf[offset : offset+int(header.extrasLength)]
