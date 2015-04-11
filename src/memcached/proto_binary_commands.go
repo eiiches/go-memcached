@@ -11,33 +11,61 @@ type binaryRequestHandler func(cli Memcached, header *binaryRequestHeader, key [
 
 func binaryRequestHandlerTable() []binaryRequestHandler {
 	return []binaryRequestHandler{
-		handleGetRequest,         // 0
-		handleSetRequest,         // 1
-		handleAddRequest,         // 2
-		handleReplaceRequest,     // 3
-		handleDeleteRequest,      // 4
-		handleIncrementRequest,   // 5
-		handleDecrementRequest,   // 6
-		handleQuitRequest,        // 7
-		handleFlushRequest,       // 8
-		handleGetQRequest,        // 9
-		handleNopRequest,         // 10
-		handleVersionRequest,     // 11
-		handleGetWithKeyRequest,  // 12
+
+		handleGetRequest, // 0
+
+		handleSetRequest, // 1
+
+		handleAddRequest, // 2
+
+		handleReplaceRequest, // 3
+
+		handleDeleteRequest, // 4
+
+		handleIncrementRequest, // 5
+
+		handleDecrementRequest, // 6
+
+		handleQuitRequest, // 7
+
+		handleFlushRequest, // 8
+
+		handleGetQRequest, // 9
+
+		handleNopRequest, // 10
+
+		handleVersionRequest, // 11
+
+		handleGetWithKeyRequest, // 12
+
 		handleGetWithKeyQRequest, // 13
-		handleAppendRequest,      // 14
-		handlePrependRequest,     // 15
-		handleStatRequest,        // 16
-		handleSetQRequest,        // 17
-		handleAddQRequest,        // 18
-		handleReplaceQRequest,    // 19
-		handleDeleteQRequest,     // 20
-		handleIncrementQRequest,  // 21
-		handleDecrementQRequest,  // 22
-		handleQuitQRequest,       // 23
-		handleFlushQRequest,      // 24
-		handleAppendQRequest,     // 25
-		handlePrependQRequest,    // 26
+
+		handleAppendRequest, // 14
+
+		handlePrependRequest, // 15
+
+		handleStatRequest, // 16
+
+		handleSetQRequest, // 17
+
+		handleAddQRequest, // 18
+
+		handleReplaceQRequest, // 19
+
+		handleDeleteQRequest, // 20
+
+		handleIncrementQRequest, // 21
+
+		handleDecrementQRequest, // 22
+
+		handleQuitQRequest, // 23
+
+		handleFlushQRequest, // 24
+
+		handleAppendQRequest, // 25
+
+		handlePrependQRequest, // 26
+
 	}
 }
 
@@ -71,13 +99,10 @@ func handleGetRequest(cli Memcached, header *binaryRequestHeader, key []byte, va
 		return binaryErrorResponse(header, rerr)
 	}
 
-	var extralen int
-
-	var extrabuf [4]byte
+	const extralen = 4
+	var extrabuf [extralen]byte
 
 	binary.BigEndian.PutUint32(extrabuf[0:], rflags)
-
-	extralen = 4
 
 	rheader := &binaryResponseHeader{
 		magic:  MAGIC_RESPONSE,
@@ -123,7 +148,7 @@ func handleSetRequest(cli Memcached, header *binaryRequestHeader, key []byte, va
 		return binaryErrorResponse(header, rerr)
 	}
 
-	var extralen int
+	const extralen = 0
 
 	rheader := &binaryResponseHeader{
 		magic:  MAGIC_RESPONSE,
@@ -169,7 +194,7 @@ func handleAddRequest(cli Memcached, header *binaryRequestHeader, key []byte, va
 		return binaryErrorResponse(header, rerr)
 	}
 
-	var extralen int
+	const extralen = 0
 
 	rheader := &binaryResponseHeader{
 		magic:  MAGIC_RESPONSE,
@@ -215,7 +240,7 @@ func handleReplaceRequest(cli Memcached, header *binaryRequestHeader, key []byte
 		return binaryErrorResponse(header, rerr)
 	}
 
-	var extralen int
+	const extralen = 0
 
 	rheader := &binaryResponseHeader{
 		magic:  MAGIC_RESPONSE,
@@ -256,7 +281,7 @@ func handleDeleteRequest(cli Memcached, header *binaryRequestHeader, key []byte,
 		return binaryErrorResponse(header, rerr)
 	}
 
-	var extralen int
+	const extralen = 0
 
 	rheader := &binaryResponseHeader{
 		magic:  MAGIC_RESPONSE,
@@ -302,7 +327,7 @@ func handleIncrementRequest(cli Memcached, header *binaryRequestHeader, key []by
 		return binaryErrorResponse(header, rerr)
 	}
 
-	var extralen int
+	const extralen = 0
 
 	rheader := &binaryResponseHeader{
 		magic:  MAGIC_RESPONSE,
@@ -349,7 +374,7 @@ func handleDecrementRequest(cli Memcached, header *binaryRequestHeader, key []by
 		return binaryErrorResponse(header, rerr)
 	}
 
-	var extralen int
+	const extralen = 0
 
 	rheader := &binaryResponseHeader{
 		magic:  MAGIC_RESPONSE,
@@ -387,7 +412,7 @@ func handleQuitRequest(cli Memcached, header *binaryRequestHeader, key []byte, v
 		return binaryErrorResponse(header, rerr)
 	}
 
-	var extralen int
+	const extralen = 0
 
 	rheader := &binaryResponseHeader{
 		magic:  MAGIC_RESPONSE,
@@ -424,7 +449,7 @@ func handleFlushRequest(cli Memcached, header *binaryRequestHeader, key []byte, 
 		return binaryErrorResponse(header, rerr)
 	}
 
-	var extralen int
+	const extralen = 0
 
 	rheader := &binaryResponseHeader{
 		magic:  MAGIC_RESPONSE,
@@ -464,13 +489,10 @@ func handleGetQRequest(cli Memcached, header *binaryRequestHeader, key []byte, v
 		return binaryErrorResponse(header, rerr)
 	}
 
-	var extralen int
-
-	var extrabuf [4]byte
+	const extralen = 4
+	var extrabuf [extralen]byte
 
 	binary.BigEndian.PutUint32(extrabuf[0:], rflags)
-
-	extralen = 4
 
 	rheader := &binaryResponseHeader{
 		magic:  MAGIC_RESPONSE,
@@ -508,7 +530,7 @@ func handleNopRequest(cli Memcached, header *binaryRequestHeader, key []byte, va
 		return binaryErrorResponse(header, rerr)
 	}
 
-	var extralen int
+	const extralen = 0
 
 	rheader := &binaryResponseHeader{
 		magic:  MAGIC_RESPONSE,
@@ -545,7 +567,7 @@ func handleVersionRequest(cli Memcached, header *binaryRequestHeader, key []byte
 		return binaryErrorResponse(header, rerr)
 	}
 
-	var extralen int
+	const extralen = 0
 
 	rheader := &binaryResponseHeader{
 		magic:  MAGIC_RESPONSE,
@@ -582,13 +604,10 @@ func handleGetWithKeyRequest(cli Memcached, header *binaryRequestHeader, key []b
 		return binaryErrorResponse(header, rerr)
 	}
 
-	var extralen int
-
-	var extrabuf [4]byte
+	const extralen = 4
+	var extrabuf [extralen]byte
 
 	binary.BigEndian.PutUint32(extrabuf[0:], rflags)
-
-	extralen = 4
 
 	rheader := &binaryResponseHeader{
 		magic:           MAGIC_RESPONSE,
@@ -629,13 +648,10 @@ func handleGetWithKeyQRequest(cli Memcached, header *binaryRequestHeader, key []
 		return binaryErrorResponse(header, rerr)
 	}
 
-	var extralen int
-
-	var extrabuf [4]byte
+	const extralen = 4
+	var extrabuf [extralen]byte
 
 	binary.BigEndian.PutUint32(extrabuf[0:], rflags)
-
-	extralen = 4
 
 	rheader := &binaryResponseHeader{
 		magic:           MAGIC_RESPONSE,
@@ -676,7 +692,7 @@ func handleAppendRequest(cli Memcached, header *binaryRequestHeader, key []byte,
 		return binaryErrorResponse(header, rerr)
 	}
 
-	var extralen int
+	const extralen = 0
 
 	rheader := &binaryResponseHeader{
 		magic:  MAGIC_RESPONSE,
@@ -716,7 +732,7 @@ func handlePrependRequest(cli Memcached, header *binaryRequestHeader, key []byte
 		return binaryErrorResponse(header, rerr)
 	}
 
-	var extralen int
+	const extralen = 0
 
 	rheader := &binaryResponseHeader{
 		magic:  MAGIC_RESPONSE,
@@ -753,7 +769,7 @@ func handleStatRequest(cli Memcached, header *binaryRequestHeader, key []byte, v
 		return binaryErrorResponse(header, rerr)
 	}
 
-	var extralen int
+	const extralen = 0
 
 	rheader := &binaryResponseHeader{
 		magic:  MAGIC_RESPONSE,
@@ -800,7 +816,7 @@ func handleSetQRequest(cli Memcached, header *binaryRequestHeader, key []byte, v
 		return binaryErrorResponse(header, rerr)
 	}
 
-	var extralen int
+	const extralen = 0
 
 	rheader := &binaryResponseHeader{
 		magic:  MAGIC_RESPONSE,
@@ -848,7 +864,7 @@ func handleAddQRequest(cli Memcached, header *binaryRequestHeader, key []byte, v
 		return binaryErrorResponse(header, rerr)
 	}
 
-	var extralen int
+	const extralen = 0
 
 	rheader := &binaryResponseHeader{
 		magic:  MAGIC_RESPONSE,
@@ -896,7 +912,7 @@ func handleReplaceQRequest(cli Memcached, header *binaryRequestHeader, key []byt
 		return binaryErrorResponse(header, rerr)
 	}
 
-	var extralen int
+	const extralen = 0
 
 	rheader := &binaryResponseHeader{
 		magic:  MAGIC_RESPONSE,
@@ -939,7 +955,7 @@ func handleDeleteQRequest(cli Memcached, header *binaryRequestHeader, key []byte
 		return binaryErrorResponse(header, rerr)
 	}
 
-	var extralen int
+	const extralen = 0
 
 	rheader := &binaryResponseHeader{
 		magic:  MAGIC_RESPONSE,
@@ -987,7 +1003,7 @@ func handleIncrementQRequest(cli Memcached, header *binaryRequestHeader, key []b
 		return binaryErrorResponse(header, rerr)
 	}
 
-	var extralen int
+	const extralen = 0
 
 	rheader := &binaryResponseHeader{
 		magic:  MAGIC_RESPONSE,
@@ -1036,7 +1052,7 @@ func handleDecrementQRequest(cli Memcached, header *binaryRequestHeader, key []b
 		return binaryErrorResponse(header, rerr)
 	}
 
-	var extralen int
+	const extralen = 0
 
 	rheader := &binaryResponseHeader{
 		magic:  MAGIC_RESPONSE,
@@ -1077,7 +1093,7 @@ func handleQuitQRequest(cli Memcached, header *binaryRequestHeader, key []byte, 
 		return binaryErrorResponse(header, rerr)
 	}
 
-	var extralen int
+	const extralen = 0
 
 	rheader := &binaryResponseHeader{
 		magic:  MAGIC_RESPONSE,
@@ -1117,7 +1133,7 @@ func handleFlushQRequest(cli Memcached, header *binaryRequestHeader, key []byte,
 		return binaryErrorResponse(header, rerr)
 	}
 
-	var extralen int
+	const extralen = 0
 
 	rheader := &binaryResponseHeader{
 		magic:  MAGIC_RESPONSE,
@@ -1159,7 +1175,7 @@ func handleAppendQRequest(cli Memcached, header *binaryRequestHeader, key []byte
 		return binaryErrorResponse(header, rerr)
 	}
 
-	var extralen int
+	const extralen = 0
 
 	rheader := &binaryResponseHeader{
 		magic:  MAGIC_RESPONSE,
@@ -1201,7 +1217,7 @@ func handlePrependQRequest(cli Memcached, header *binaryRequestHeader, key []byt
 		return binaryErrorResponse(header, rerr)
 	}
 
-	var extralen int
+	const extralen = 0
 
 	rheader := &binaryResponseHeader{
 		magic:  MAGIC_RESPONSE,

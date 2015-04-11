@@ -67,14 +67,19 @@ func binaryErrorResponse(header *binaryRequestHeader, err *MemcachedError) (*bin
 				return binaryErrorResponse(header, rerr)
 			}
 
-			var extralen int
-			{{if $op.response.extra_length}}{{if gt $op.response.extra_length 0}}
-				var extrabuf [{{$op.response.extra_length}}]byte
-				{{range $extra := $op.response.extra}}
-					binary.BigEndian.Put{{$extra.type | lowerToUpperCamel}}(extrabuf[{{$extra.offset}}:], {{$extra.name}})
+			{{if $op.response.extra_length}}
+				{{if gt $op.response.extra_length 0}}
+					const extralen = {{$op.response.extra_length}}
+					var extrabuf [extralen]byte
+					{{range $extra := $op.response.extra}}
+						binary.BigEndian.Put{{$extra.type | lowerToUpperCamel}}(extrabuf[{{$extra.offset}}:], {{$extra.name}})
+					{{end}}
+				{{else}}
+					const extralen = 0
 				{{end}}
-				extralen = {{$op.response.extra_length}}
-			{{end}}{{end}}
+			{{else}}
+				const extralen = 0
+			{{end}}
 
 			rheader := &binaryResponseHeader{
 				magic: MAGIC_RESPONSE,
