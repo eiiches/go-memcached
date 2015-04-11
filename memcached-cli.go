@@ -12,5 +12,5 @@ func main() {
 	}
 	defer client.Close()
 
-	client.Call(memcached.Set([]byte("key"), []byte("value")).WithExpire(10))
+	client.Call(memcached.Set([]byte("key"), []byte("value"), nil))
 }

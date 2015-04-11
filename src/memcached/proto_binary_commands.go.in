@@ -6,7 +6,7 @@ import "os"
 import "fmt"
 import "encoding/binary"
 
-type binaryRequestHandler func(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error)
+type binaryRequestHandler func(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (rheader *binaryResponseHeader, rkey []byte, rvalue []byte, rextras []byte)
 
 func binaryRequestHandlerTable() []binaryRequestHandler {
 	return []binaryRequestHandler{
@@ -14,29 +14,38 @@ func binaryRequestHandlerTable() []binaryRequestHandler {
 {{end}} }
 }
 
+func binaryErrorResponse(header *binaryRequestHeader, err *MemcachedError) (*binaryResponseHeader, []byte, []byte, []byte) {
+	return &binaryResponseHeader{
+			magic: MAGIC_RESPONSE,
+			opaque: header.opaque,
+			opcode: header.opcode,
+			status: err.ErrorCode(),
+	}, nil, nil, nil
+}
+
 {{range $op := .binary_commands}}
-func handle{{$op.name}}Request(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (serverCommand, error) {
+func handle{{$op.name}}Request(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (*binaryResponseHeader, []byte, []byte, []byte) {
 	if len(key) {{if $op.request.has_key}}=={{else}}>{{end}} 0 {
-		return nil, fmt.Errorf({{if $op.request.has_key}}"{{$op.name}} MUST have key"{{else}}"{{$op.name}} MUST NOT have key"{{end}})
+		return binaryErrorResponse(header, newInvalidArgumentsError({{if $op.request.has_key}}"{{$op.name}} MUST have key"{{else}}"{{$op.name}} MUST NOT have key"{{end}}))
 	}
 
 	if len(value) {{if $op.request.has_value}}=={{else}}>{{end}} 0 {
-		return nil, fmt.Errorf({{if $op.request.has_value}}"{{$op.name}} MUST have value"{{else}}"{{$op.name}} MUST NOT have value"{{end}})
+		return binaryErrorResponse(header, newInvalidArgumentsError({{if $op.request.has_value}}"{{$op.name}} MUST have value"{{else}}"{{$op.name}} MUST NOT have value"{{end}}))
 	}
 
 	{{if $op.request.has_extras}}
 		{{if $op.request.has_extras | isTrue}}
 			if len(extras) == 0 {
-				return nil, fmt.Errorf("{{$op.name}} MUST have extras")
+				return binaryErrorResponse(header, newInvalidArgumentsError("{{$op.name}} MUST have extras"))
 			}
 		{{else}}
 			if len(extras) != {{$op.request.has_extras.size}} {
-			return nil, fmt.Errorf("{{$op.name}} MUST have extras of exactly {{$op.request.has_extras.size}} bytes")
+			return binaryErrorResponse(header, newInvalidArgumentsError("{{$op.name}} MUST have extras of exactly {{$op.request.has_extras.size}} bytes"))
 			}
 		{{end}}
 	{{else}}
 		if len(extras) > 0 {
-			return nil, fmt.Errorf("{{$op.name}} MUST NOT have extras")
+			return binaryErrorResponse(header, newInvalidArgumentsError("{{$op.name}} MUST NOT have extras"))
 		}
 	{{end}}
 
@@ -62,9 +71,32 @@ func handle{{$op.name}}Request(cli Memcached, header *binaryRequestHeader, key [
 			{{end}}
 		}
 		{{if $command.returns.has_key}}rkey, {{end}}{{if $command.returns.has_value}}rvalue, {{end}}{{if $command.returns.has_flags}}rflags, {{end}}{{if $command.returns.has_cas}}rcas, {{end}}rerr := cli.{{$CommandName}}({{if $command.args.has_key}}key, {{end}}{{if $command.args.has_value}}value, {{end}}{{range $arg := $op.request.args.extra}}{{$arg}}, {{end}}opts)
+
+		if rerr != nil {
+			return binaryErrorResponse(header, rerr)
+		}
+
+		var extralen int
+		{{if $op.response.extra_length}}{{if gt $op.response.extra_length 0}}
+			var extrabuf [{{$op.response.extra_length}}]byte
+			{{range $extra := $op.response.extra}}
+				binary.BigEndian.Put{{$extra.type}}(extrabuf[{{$extra.offset}}:], {{$extra.name}})
+			{{end}}
+			extralen = {{$op.response.extra_length}}
+		{{end}}{{end}}
+
+		rheader := &binaryResponseHeader{
+			magic: MAGIC_RESPONSE,
+			opaque: header.opaque,
+			opcode: header.opcode,
+			{{if $command.returns.has_key}}keyLength: uint16(len(rkey)),{{end}}
+			status: 0,
+			totalBodyLength: uint32(extralen{{if $command.returns.has_key}} + len(rkey){{end}}{{if $command.returns.has_value}} + len(rvalue){{end}}),
+			extrasLength: uint8(extralen),
+			{{if $command.returns.has_cas}}cas: rcas,{{end}}
+		}
+
+		return rheader, {{if $command.returns.has_key}}rkey{{else}}nil{{end}}, {{if $command.returns.has_value}}rvalue{{else}}nil{{end}}, nil
 	{{end}}{{end}}
-
-
-	return nil, nil
 }
 {{end}}

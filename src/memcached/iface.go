@@ -6,35 +6,35 @@
 package memcached
 
 type Memcached interface {
-	Add(key []byte, value []byte, opts *AddOptions) (rcas uint64, rerr error)
+	Add(key []byte, value []byte, opts *AddOptions) (rcas uint64, rerr *MemcachedError)
 
-	Replace(key []byte, value []byte, opts *ReplaceOptions) (rcas uint64, rerr error)
+	Replace(key []byte, value []byte, opts *ReplaceOptions) (rcas uint64, rerr *MemcachedError)
 
-	Get(key []byte, opts *GetOptions) (rvalue []byte, rflags uint32, rcas uint64, rerr error)
+	Get(key []byte, opts *GetOptions) (rvalue []byte, rflags uint32, rcas uint64, rerr *MemcachedError)
 
-	Increment(key []byte, amount uint64, initial uint64, opts *IncrementOptions) (rvalue []byte, rcas uint64, rerr error)
+	Increment(key []byte, amount uint64, initial uint64, opts *IncrementOptions) (rvalue []byte, rcas uint64, rerr *MemcachedError)
 
-	Decrement(key []byte, amount uint64, initial uint64, opts *DecrementOptions) (rvalue []byte, rcas uint64, rerr error)
+	Decrement(key []byte, amount uint64, initial uint64, opts *DecrementOptions) (rvalue []byte, rcas uint64, rerr *MemcachedError)
 
-	Set(key []byte, value []byte, opts *SetOptions) (rcas uint64, rerr error)
+	Set(key []byte, value []byte, opts *SetOptions) (rcas uint64, rerr *MemcachedError)
 
-	Delete(key []byte, opts *DeleteOptions) (rerr error)
+	Delete(key []byte, opts *DeleteOptions) (rerr *MemcachedError)
 
-	Append(key []byte, value []byte, opts *AppendOptions) (rerr error)
+	Append(key []byte, value []byte, opts *AppendOptions) (rerr *MemcachedError)
 
-	Prepend(key []byte, value []byte, opts *PrependOptions) (rerr error)
+	Prepend(key []byte, value []byte, opts *PrependOptions) (rerr *MemcachedError)
 
-	Flush(opts *FlushOptions) (rerr error)
+	Flush(opts *FlushOptions) (rerr *MemcachedError)
 
-	Nop(opts *NopOptions) (rerr error)
+	Nop(opts *NopOptions) (rerr *MemcachedError)
 
-	Quit(opts *QuitOptions) (rerr error)
+	Quit(opts *QuitOptions) (rerr *MemcachedError)
 
-	Version(opts *VersionOptions) (rerr error)
+	Version(opts *VersionOptions) (rerr *MemcachedError)
 
-	Stat(opts *StatOptions) (rerr error)
+	Stat(opts *StatOptions) (rerr *MemcachedError)
 
-	GetWithKey(key []byte, opts *GetWithKeyOptions) (rkey []byte, rvalue []byte, rflags uint32, rcas uint64, rerr error)
+	GetWithKey(key []byte, opts *GetWithKeyOptions) (rkey []byte, rvalue []byte, rflags uint32, rcas uint64, rerr *MemcachedError)
 }
 
 func Add(key []byte, value []byte, opts *AddOptions) *commandAdd {

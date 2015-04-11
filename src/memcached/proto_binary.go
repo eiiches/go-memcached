@@ -9,8 +9,33 @@ import "net"
 import "encoding/binary"
 
 const MAGIC_REQUEST = 0x80
+const MAGIC_RESPONSE = 0x81
 const HEADER_BYTES = 24
 const MAGIC_DEADBEEF = 0xdeadbeef
+
+type binaryResponseHeader struct {
+	magic           uint8
+	opcode          uint8
+	keyLength       uint16
+	extrasLength    uint8
+	dataType        uint8
+	status          uint16
+	totalBodyLength uint32
+	opaque          uint32
+	cas             uint64
+}
+
+func (header *binaryResponseHeader) write(buf []byte) {
+	buf[0] = header.magic
+	buf[1] = header.opcode
+	binary.BigEndian.PutUint16(buf[2:], header.keyLength)
+	buf[4] = header.extrasLength
+	buf[5] = header.dataType
+	binary.BigEndian.PutUint16(buf[6:], header.status)
+	binary.BigEndian.PutUint32(buf[8:], header.totalBodyLength)
+	binary.BigEndian.PutUint32(buf[12:], header.opaque)
+	binary.BigEndian.PutUint64(buf[16:], header.cas)
+}
 
 type binaryRequestHeader struct {
 	magic           uint8
@@ -73,11 +98,22 @@ func (self binaryProtocolHandler) handleConnection(conn net.Conn, server *Memcac
 		if int(header.opcode) >= len(self.handlers) {
 			return fmt.Errorf("invalid opcode")
 		}
-		command, err := self.handlers[header.opcode](server, &header, key, value, extras)
-		if err != nil {
-			return err
+		rheader, rkey, rvalue, rextras := self.handlers[header.opcode](server, &header, key, value, extras)
+		fmt.Fprintf(os.Stderr, "response: header = %+v, key = %+v, value = %+v, extras = %+v\n", rheader, rkey, rvalue, rextras)
+
+		var rbuf [HEADER_BYTES]byte
+		rheader.write(rbuf[:])
+
+		conn.Write(rbuf[:])
+		if rkey != nil {
+			conn.Write(rkey)
 		}
-		fmt.Fprintf(os.Stderr, "command: %+v\n", command)
+		if rvalue != nil {
+			conn.Write(rvalue)
+		}
+		if rextras != nil {
+			conn.Write(rextras)
+		}
 	}
 	return nil
 }

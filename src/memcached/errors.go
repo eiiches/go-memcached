@@ -3,7 +3,7 @@
 package memcached
 
 type MemcachedError struct {
-	code uint32
+	code uint16
 	msg  string
 }
 
@@ -11,7 +11,7 @@ func (self MemcachedError) Error() string {
 	return self.msg
 }
 
-func (self MemcachedError) ErrorCode() uint32 {
+func (self MemcachedError) ErrorCode() uint16 {
 	return self.code
 }
 
@@ -27,3 +27,7 @@ var (
 	UnknownCommandError     = &MemcachedError{code: 0x81, msg: "Unknown command"}
 	OutOfMemoryError        = &MemcachedError{code: 0x82, msg: "Out of memory"}
 )
+
+func newInvalidArgumentsError(msg string) *MemcachedError {
+	return &MemcachedError{code: 0x04, msg: msg}
+}

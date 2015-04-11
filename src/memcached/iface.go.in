@@ -4,7 +4,7 @@ package memcached
 
 type Memcached interface {
 	{{range $command := .commands}}{{with $Name := $command.name | snakeToUpperCamel}}
-		{{$Name}}({{if $command.args.has_key}}key []byte, {{end}}{{if $command.args.has_value}}value []byte, {{end}}{{range $arg := $command.args.extra}}{{$arg.var}} {{$arg.type}}, {{end}}opts *{{$Name}}Options) ({{if $command.returns.has_key}}rkey []byte, {{end}}{{if $command.returns.has_value}}rvalue []byte, {{end}}{{if $command.returns.has_flags}}rflags uint32, {{end}}{{if $command.returns.has_cas}}rcas uint64, {{end}}rerr error)
+		{{$Name}}({{if $command.args.has_key}}key []byte, {{end}}{{if $command.args.has_value}}value []byte, {{end}}{{range $arg := $command.args.extra}}{{$arg.var}} {{$arg.type}}, {{end}}opts *{{$Name}}Options) ({{if $command.returns.has_key}}rkey []byte, {{end}}{{if $command.returns.has_value}}rvalue []byte, {{end}}{{if $command.returns.has_flags}}rflags uint32, {{end}}{{if $command.returns.has_cas}}rcas uint64, {{end}}rerr *MemcachedError)
 	{{end}}{{end}}
 }
 
