@@ -69,16 +69,16 @@ func binaryErrorResponse(header *binaryRequestHeader, err *MemcachedError) (*bin
 
 			{{if $op.response.extra_length}}
 				{{if gt $op.response.extra_length 0}}
-					const extralen = {{$op.response.extra_length}}
-					var extrabuf [extralen]byte
+					const rextralen = {{$op.response.extra_length}}
+					var rextrabuf [rextralen]byte
 					{{range $extra := $op.response.extra}}
-						binary.BigEndian.Put{{$extra.type | lowerToUpperCamel}}(extrabuf[{{$extra.offset}}:], {{$extra.name}})
+						binary.BigEndian.Put{{$extra.type | lowerToUpperCamel}}(rextrabuf[{{$extra.offset}}:], {{$extra.name}})
 					{{end}}
 				{{else}}
-					const extralen = 0
+					const rextralen = 0
 				{{end}}
 			{{else}}
-				const extralen = 0
+				const rextralen = 0
 			{{end}}
 
 			rheader := &binaryResponseHeader{
@@ -87,12 +87,12 @@ func binaryErrorResponse(header *binaryRequestHeader, err *MemcachedError) (*bin
 				opcode: header.opcode,
 				{{if $command.returns.has_key}}keyLength: uint16(len(rkey)),{{end}}
 				status: 0,
-				totalBodyLength: uint32(extralen{{if $command.returns.has_key}} + len(rkey){{end}}{{if $command.returns.has_value}} + len(rvalue){{end}}),
-				extrasLength: uint8(extralen),
+				totalBodyLength: uint32(rextralen{{if $command.returns.has_key}} + len(rkey){{end}}{{if $command.returns.has_value}} + len(rvalue){{end}}),
+				extrasLength: uint8(rextralen),
 				{{if $command.returns.has_cas}}cas: rcas,{{end}}
 			}
 
-			return rheader, {{if $command.returns.has_key}}rkey{{else}}nil{{end}}, {{if $command.returns.has_value}}rvalue{{else}}nil{{end}}, {{if $op.response.extra_length}}{{if gt $op.response.extra_length 0}}extrabuf[:]{{else}}nil{{end}}{{else}}nil{{end}}
+			return rheader, {{if $command.returns.has_key}}rkey{{else}}nil{{end}}, {{if $command.returns.has_value}}rvalue{{else}}nil{{end}}, {{if $op.response.extra_length}}{{if gt $op.response.extra_length 0}}rextrabuf[:]{{else}}nil{{end}}{{else}}nil{{end}}
 		{{end}}{{end}}
 	}
 {{end}}
