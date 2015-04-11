@@ -53,14 +53,14 @@ func (self binaryProtocolHandler) handleConnection(conn net.Conn, server *Memcac
 		rheader.write(rbuf[:])
 
 		conn.Write(rbuf[:])
+		if rextras != nil {
+			conn.Write(rextras)
+		}
 		if rkey != nil {
 			conn.Write(rkey)
 		}
 		if rvalue != nil {
 			conn.Write(rvalue)
-		}
-		if rextras != nil {
-			conn.Write(rextras)
 		}
 	}
 	return nil

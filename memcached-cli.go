@@ -12,5 +12,7 @@ func main() {
 	}
 	defer client.Close()
 
-	client.Call(memcached.Set([]byte("key"), []byte("value"), nil))
+	client.Set([]byte("hoge"), []byte("10"), nil)
+	value, _, _, _ := client.Get([]byte("hoge"), nil)
+	fmt.Println(value)
 }

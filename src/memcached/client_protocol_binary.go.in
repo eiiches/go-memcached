@@ -11,14 +11,14 @@ func sendRequest(cli *MemcachedClient, header *binaryRequestHeader, key []byte, 
 	header.write(buf[:])
 
 	cli.conn.Write(buf[:])
+	if extra != nil {
+		cli.conn.Write(extra)
+	}
 	if key != nil {
 		cli.conn.Write(key)
 	}
 	if value != nil {
 		cli.conn.Write(value)
-	}
-	if extra != nil {
-		cli.conn.Write(extra)
 	}
 }
 
@@ -66,10 +66,15 @@ func recvResponse(cli *MemcachedClient) (*binaryResponseHeader, []byte, []byte, 
 {{range $op := .bin_ops}}
 	{{with $command := $op.command}}{{with $CommandName := $command.name | snakeToUpperCamel}}
 		func format{{$op.name}}Request({{if $command.args.has_key}}key []byte, {{end}}{{if $command.args.has_value}}value []byte, {{end}}{{range $arg := $command.args.extra}}{{$arg.name}} {{$arg.type}}, {{end}}opts *{{$CommandName}}Options) (*binaryRequestHeader, []byte, []byte, []byte) {
+			{{if $command.opts.has_flags}}var flags uint32{{end}}
+			{{if $command.opts.has_cas}}var cas uint64{{end}}
+			{{if $command.opts.has_expire}}var expire uint32{{end}}
 
-			{{if $command.opts.has_flags}}flags := opts.Flags{{end}}
-			{{if $command.opts.has_cas}}cas := opts.Cas{{end}}
-			{{if $command.opts.has_expire}}expire := opts.Expire{{end}}
+			if opts != nil {
+				{{if $command.opts.has_flags}}flags = opts.Flags{{end}}
+				{{if $command.opts.has_cas}}cas = opts.Cas{{end}}
+				{{if $command.opts.has_expire}}expire = opts.Expire{{end}}
+			}
 
 			{{if $op.request.extra_length}}
 				{{if gt $op.request.extra_length 0}}

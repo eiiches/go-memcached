@@ -14,14 +14,14 @@ func sendRequest(cli *MemcachedClient, header *binaryRequestHeader, key []byte, 
 	header.write(buf[:])
 
 	cli.conn.Write(buf[:])
+	if extra != nil {
+		cli.conn.Write(extra)
+	}
 	if key != nil {
 		cli.conn.Write(key)
 	}
 	if value != nil {
 		cli.conn.Write(value)
-	}
-	if extra != nil {
-		cli.conn.Write(extra)
 	}
 }
 
@@ -205,6 +205,10 @@ func (cli *MemcachedClient) GetWithKey(key []byte, opts *GetWithKeyOptions) ([]b
 
 func formatGetRequest(key []byte, opts *GetOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
 
+	if opts != nil {
+
+	}
+
 	const extralen = 0
 
 	header := &binaryRequestHeader{
@@ -228,10 +232,15 @@ func parseGetResponse(header *binaryResponseHeader, key []byte, value []byte, ex
 }
 
 func formatSetRequest(key []byte, value []byte, opts *SetOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
+	var flags uint32
+	var cas uint64
+	var expire uint32
 
-	flags := opts.Flags
-	cas := opts.Cas
-	expire := opts.Expire
+	if opts != nil {
+		flags = opts.Flags
+		cas = opts.Cas
+		expire = opts.Expire
+	}
 
 	const extralen = 8
 	var extrabuf [extralen]byte
@@ -260,10 +269,15 @@ func parseSetResponse(header *binaryResponseHeader, key []byte, value []byte, ex
 }
 
 func formatAddRequest(key []byte, value []byte, opts *AddOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
+	var flags uint32
+	var cas uint64
+	var expire uint32
 
-	flags := opts.Flags
-	cas := opts.Cas
-	expire := opts.Expire
+	if opts != nil {
+		flags = opts.Flags
+		cas = opts.Cas
+		expire = opts.Expire
+	}
 
 	const extralen = 8
 	var extrabuf [extralen]byte
@@ -292,10 +306,15 @@ func parseAddResponse(header *binaryResponseHeader, key []byte, value []byte, ex
 }
 
 func formatReplaceRequest(key []byte, value []byte, opts *ReplaceOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
+	var flags uint32
+	var cas uint64
+	var expire uint32
 
-	flags := opts.Flags
-	cas := opts.Cas
-	expire := opts.Expire
+	if opts != nil {
+		flags = opts.Flags
+		cas = opts.Cas
+		expire = opts.Expire
+	}
 
 	const extralen = 8
 	var extrabuf [extralen]byte
@@ -325,7 +344,13 @@ func parseReplaceResponse(header *binaryResponseHeader, key []byte, value []byte
 
 func formatDeleteRequest(key []byte, opts *DeleteOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
 
-	cas := opts.Cas
+	var cas uint64
+
+	if opts != nil {
+
+		cas = opts.Cas
+
+	}
 
 	const extralen = 0
 
@@ -348,8 +373,14 @@ func parseDeleteResponse(header *binaryResponseHeader, key []byte, value []byte,
 
 func formatIncrementRequest(key []byte, amount uint64, initial uint64, opts *IncrementOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
 
-	cas := opts.Cas
-	expire := opts.Expire
+	var cas uint64
+	var expire uint32
+
+	if opts != nil {
+
+		cas = opts.Cas
+		expire = opts.Expire
+	}
 
 	const extralen = 20
 	var extrabuf [extralen]byte
@@ -381,8 +412,14 @@ func parseIncrementResponse(header *binaryResponseHeader, key []byte, value []by
 
 func formatDecrementRequest(key []byte, amount uint64, initial uint64, opts *DecrementOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
 
-	cas := opts.Cas
-	expire := opts.Expire
+	var cas uint64
+	var expire uint32
+
+	if opts != nil {
+
+		cas = opts.Cas
+		expire = opts.Expire
+	}
 
 	const extralen = 20
 	var extrabuf [extralen]byte
@@ -414,6 +451,10 @@ func parseDecrementResponse(header *binaryResponseHeader, key []byte, value []by
 
 func formatQuitRequest(opts *QuitOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
 
+	if opts != nil {
+
+	}
+
 	const extralen = 0
 
 	header := &binaryRequestHeader{
@@ -434,6 +475,10 @@ func parseQuitResponse(header *binaryResponseHeader, key []byte, value []byte, e
 
 func formatFlushRequest(opts *FlushOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
 
+	if opts != nil {
+
+	}
+
 	const extralen = 0
 
 	header := &binaryRequestHeader{
@@ -453,6 +498,10 @@ func parseFlushResponse(header *binaryResponseHeader, key []byte, value []byte, 
 }
 
 func formatGetQRequest(key []byte, opts *GetOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
+
+	if opts != nil {
+
+	}
 
 	const extralen = 0
 
@@ -478,6 +527,10 @@ func parseGetQResponse(header *binaryResponseHeader, key []byte, value []byte, e
 
 func formatNopRequest(opts *NopOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
 
+	if opts != nil {
+
+	}
+
 	const extralen = 0
 
 	header := &binaryRequestHeader{
@@ -498,6 +551,10 @@ func parseNopResponse(header *binaryResponseHeader, key []byte, value []byte, ex
 
 func formatVersionRequest(opts *VersionOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
 
+	if opts != nil {
+
+	}
+
 	const extralen = 0
 
 	header := &binaryRequestHeader{
@@ -517,6 +574,10 @@ func parseVersionResponse(header *binaryResponseHeader, key []byte, value []byte
 }
 
 func formatGetWithKeyRequest(key []byte, opts *GetWithKeyOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
+
+	if opts != nil {
+
+	}
 
 	const extralen = 0
 
@@ -542,6 +603,10 @@ func parseGetWithKeyResponse(header *binaryResponseHeader, key []byte, value []b
 
 func formatGetWithKeyQRequest(key []byte, opts *GetWithKeyOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
 
+	if opts != nil {
+
+	}
+
 	const extralen = 0
 
 	header := &binaryRequestHeader{
@@ -566,7 +631,13 @@ func parseGetWithKeyQResponse(header *binaryResponseHeader, key []byte, value []
 
 func formatAppendRequest(key []byte, value []byte, opts *AppendOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
 
-	cas := opts.Cas
+	var cas uint64
+
+	if opts != nil {
+
+		cas = opts.Cas
+
+	}
 
 	const extralen = 0
 
@@ -589,7 +660,13 @@ func parseAppendResponse(header *binaryResponseHeader, key []byte, value []byte,
 
 func formatPrependRequest(key []byte, value []byte, opts *PrependOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
 
-	cas := opts.Cas
+	var cas uint64
+
+	if opts != nil {
+
+		cas = opts.Cas
+
+	}
 
 	const extralen = 0
 
@@ -612,6 +689,10 @@ func parsePrependResponse(header *binaryResponseHeader, key []byte, value []byte
 
 func formatStatRequest(opts *StatOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
 
+	if opts != nil {
+
+	}
+
 	const extralen = 0
 
 	header := &binaryRequestHeader{
@@ -631,10 +712,15 @@ func parseStatResponse(header *binaryResponseHeader, key []byte, value []byte, e
 }
 
 func formatSetQRequest(key []byte, value []byte, opts *SetOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
+	var flags uint32
+	var cas uint64
+	var expire uint32
 
-	flags := opts.Flags
-	cas := opts.Cas
-	expire := opts.Expire
+	if opts != nil {
+		flags = opts.Flags
+		cas = opts.Cas
+		expire = opts.Expire
+	}
 
 	const extralen = 8
 	var extrabuf [extralen]byte
@@ -663,10 +749,15 @@ func parseSetQResponse(header *binaryResponseHeader, key []byte, value []byte, e
 }
 
 func formatAddQRequest(key []byte, value []byte, opts *AddOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
+	var flags uint32
+	var cas uint64
+	var expire uint32
 
-	flags := opts.Flags
-	cas := opts.Cas
-	expire := opts.Expire
+	if opts != nil {
+		flags = opts.Flags
+		cas = opts.Cas
+		expire = opts.Expire
+	}
 
 	const extralen = 8
 	var extrabuf [extralen]byte
@@ -695,10 +786,15 @@ func parseAddQResponse(header *binaryResponseHeader, key []byte, value []byte, e
 }
 
 func formatReplaceQRequest(key []byte, value []byte, opts *ReplaceOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
+	var flags uint32
+	var cas uint64
+	var expire uint32
 
-	flags := opts.Flags
-	cas := opts.Cas
-	expire := opts.Expire
+	if opts != nil {
+		flags = opts.Flags
+		cas = opts.Cas
+		expire = opts.Expire
+	}
 
 	const extralen = 8
 	var extrabuf [extralen]byte
@@ -728,7 +824,13 @@ func parseReplaceQResponse(header *binaryResponseHeader, key []byte, value []byt
 
 func formatDeleteQRequest(key []byte, opts *DeleteOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
 
-	cas := opts.Cas
+	var cas uint64
+
+	if opts != nil {
+
+		cas = opts.Cas
+
+	}
 
 	const extralen = 0
 
@@ -751,8 +853,14 @@ func parseDeleteQResponse(header *binaryResponseHeader, key []byte, value []byte
 
 func formatIncrementQRequest(key []byte, amount uint64, initial uint64, opts *IncrementOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
 
-	cas := opts.Cas
-	expire := opts.Expire
+	var cas uint64
+	var expire uint32
+
+	if opts != nil {
+
+		cas = opts.Cas
+		expire = opts.Expire
+	}
 
 	const extralen = 20
 	var extrabuf [extralen]byte
@@ -784,8 +892,14 @@ func parseIncrementQResponse(header *binaryResponseHeader, key []byte, value []b
 
 func formatDecrementQRequest(key []byte, amount uint64, initial uint64, opts *DecrementOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
 
-	cas := opts.Cas
-	expire := opts.Expire
+	var cas uint64
+	var expire uint32
+
+	if opts != nil {
+
+		cas = opts.Cas
+		expire = opts.Expire
+	}
 
 	const extralen = 20
 	var extrabuf [extralen]byte
@@ -817,6 +931,10 @@ func parseDecrementQResponse(header *binaryResponseHeader, key []byte, value []b
 
 func formatQuitQRequest(opts *QuitOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
 
+	if opts != nil {
+
+	}
+
 	const extralen = 0
 
 	header := &binaryRequestHeader{
@@ -836,6 +954,10 @@ func parseQuitQResponse(header *binaryResponseHeader, key []byte, value []byte, 
 }
 
 func formatFlushQRequest(opts *FlushOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
+
+	if opts != nil {
+
+	}
 
 	const extralen = 0
 
@@ -857,7 +979,13 @@ func parseFlushQResponse(header *binaryResponseHeader, key []byte, value []byte,
 
 func formatAppendQRequest(key []byte, value []byte, opts *AppendOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
 
-	cas := opts.Cas
+	var cas uint64
+
+	if opts != nil {
+
+		cas = opts.Cas
+
+	}
 
 	const extralen = 0
 
@@ -880,7 +1008,13 @@ func parseAppendQResponse(header *binaryResponseHeader, key []byte, value []byte
 
 func formatPrependQRequest(key []byte, value []byte, opts *PrependOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
 
-	cas := opts.Cas
+	var cas uint64
+
+	if opts != nil {
+
+		cas = opts.Cas
+
+	}
 
 	const extralen = 0
 
