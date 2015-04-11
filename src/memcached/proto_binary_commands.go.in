@@ -8,8 +8,10 @@ type binaryRequestHandler func(cli Memcached, header *binaryRequestHeader, key [
 
 func binaryRequestHandlerTable() []binaryRequestHandler {
 	return []binaryRequestHandler{
-{{range $command := .bin_ops}}		handle{{$command.name}}Request, // {{$command.opcode}}
-{{end}} }
+		{{range $command := .bin_ops}}
+			handle{{$command.name}}Request, // {{$command.opcode}}
+		{{end}}
+	}
 }
 
 func binaryErrorResponse(header *binaryRequestHeader, err *MemcachedError) (*binaryResponseHeader, []byte, []byte, []byte) {
@@ -22,71 +24,70 @@ func binaryErrorResponse(header *binaryRequestHeader, err *MemcachedError) (*bin
 }
 
 {{range $op := .bin_ops}}
-func handle{{$op.name}}Request(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (*binaryResponseHeader, []byte, []byte, []byte) {
-	{{with $command := $op.command}}{{with $CommandName := $command.name | snakeToUpperCamel}}
-		if len(key) {{if $command.args.has_key}}=={{else}}>{{end}} 0 {
-			return binaryErrorResponse(header, newInvalidArgumentsError({{if $command.args.has_key}}"{{$op.name}} MUST have key"{{else}}"{{$op.name}} MUST NOT have key"{{end}}))
-		}
+	func handle{{$op.name}}Request(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (*binaryResponseHeader, []byte, []byte, []byte) {
+		{{with $command := $op.command}}{{with $CommandName := $command.name | snakeToUpperCamel}}
+			if len(key) {{if $command.args.has_key}}=={{else}}>{{end}} 0 {
+				return binaryErrorResponse(header, newInvalidArgumentsError({{if $command.args.has_key}}"{{$op.name}} MUST have key"{{else}}"{{$op.name}} MUST NOT have key"{{end}}))
+			}
 
-		if len(value) {{if $command.args.has_value}}=={{else}}>{{end}} 0 {
-			return binaryErrorResponse(header, newInvalidArgumentsError({{if $command.args.has_value}}"{{$op.name}} MUST have value"{{else}}"{{$op.name}} MUST NOT have value"{{end}}))
-		}
+			if len(value) {{if $command.args.has_value}}=={{else}}>{{end}} 0 {
+				return binaryErrorResponse(header, newInvalidArgumentsError({{if $command.args.has_value}}"{{$op.name}} MUST have value"{{else}}"{{$op.name}} MUST NOT have value"{{end}}))
+			}
 
-		{{if $op.request.extra_length}}
-			{{if gt $op.request.extra_length 0}}
-				if len(extras) != {{$op.request.extra_length}} {
-					return binaryErrorResponse(header, newInvalidArgumentsError("{{$op.name}} MUST have extras of exactly {{$op.request.extra_length}} bytes"))
-				}
+			{{if $op.request.extra_length}}
+				{{if gt $op.request.extra_length 0}}
+					if len(extras) != {{$op.request.extra_length}} {
+						return binaryErrorResponse(header, newInvalidArgumentsError("{{$op.name}} MUST have extras of exactly {{$op.request.extra_length}} bytes"))
+					}
+				{{else}}
+					if len(extras) > 0 {
+						return binaryErrorResponse(header, newInvalidArgumentsError("{{$op.name}} MUST NOT have extras"))
+					}
+				{{end}}
 			{{else}}
 				if len(extras) > 0 {
 					return binaryErrorResponse(header, newInvalidArgumentsError("{{$op.name}} MUST NOT have extras"))
 				}
 			{{end}}
-		{{else}}
-			if len(extras) > 0 {
-				return binaryErrorResponse(header, newInvalidArgumentsError("{{$op.name}} MUST NOT have extras"))
+			{{range $extra := $op.request.extra}}
+				{{$extra.name}} := binary.BigEndian.{{$extra.type | lowerToUpperCamel}}(extras[{{$extra.offset}}:])
+			{{end}}
+
+			opts := &{{$CommandName}}Options{
+				{{if $command.opts.has_expire}} Expire: expire,{{end}}
+				{{if $command.opts.has_cas}}    Cas:    header.cas,{{end}}
+				{{if $command.opts.has_flags}}  Flags:  flags,{{end}}
+				{{range $key, $value := $op.request.opts.extra}}
+					{{$key | snakeToUpperCamel}}: {{$value}},
+				{{end}}
 			}
-		{{end}}
+			{{if $command.returns.has_key}}rkey, {{end}}{{if $command.returns.has_value}}rvalue, {{end}}{{if $command.returns.has_flags}}rflags, {{end}}{{if $command.returns.has_cas}}rcas, {{end}}rerr := cli.{{$CommandName}}({{if $command.args.has_key}}key, {{end}}{{if $command.args.has_value}}value, {{end}}{{range $arg := $op.request.args.extra}}{{$arg}}, {{end}}opts)
 
-		{{range $extra := $op.request.extra}}
-			{{$extra.name}} := binary.BigEndian.{{$extra.type | lowerToUpperCamel}}(extras[{{$extra.offset}}:])
-		{{end}}
+			if rerr != nil {
+				return binaryErrorResponse(header, rerr)
+			}
 
-		opts := &{{$CommandName}}Options{
-			{{if $command.opts.has_expire}} Expire: expire,{{end}}
-			{{if $command.opts.has_cas}}    Cas:    header.cas,{{end}}
-			{{if $command.opts.has_flags}}  Flags:  flags,{{end}}
-			{{range $key, $value := $op.request.opts.extra}}
-				{{$key | snakeToUpperCamel}}: {{$value}},
-			{{end}}
-		}
-		{{if $command.returns.has_key}}rkey, {{end}}{{if $command.returns.has_value}}rvalue, {{end}}{{if $command.returns.has_flags}}rflags, {{end}}{{if $command.returns.has_cas}}rcas, {{end}}rerr := cli.{{$CommandName}}({{if $command.args.has_key}}key, {{end}}{{if $command.args.has_value}}value, {{end}}{{range $arg := $op.request.args.extra}}{{$arg}}, {{end}}opts)
+			var extralen int
+			{{if $op.response.extra_length}}{{if gt $op.response.extra_length 0}}
+				var extrabuf [{{$op.response.extra_length}}]byte
+				{{range $extra := $op.response.extra}}
+					binary.BigEndian.Put{{$extra.type | lowerToUpperCamel}}(extrabuf[{{$extra.offset}}:], {{$extra.name}})
+				{{end}}
+				extralen = {{$op.response.extra_length}}
+			{{end}}{{end}}
 
-		if rerr != nil {
-			return binaryErrorResponse(header, rerr)
-		}
+			rheader := &binaryResponseHeader{
+				magic: MAGIC_RESPONSE,
+				opaque: header.opaque,
+				opcode: header.opcode,
+				{{if $command.returns.has_key}}keyLength: uint16(len(rkey)),{{end}}
+				status: 0,
+				totalBodyLength: uint32(extralen{{if $command.returns.has_key}} + len(rkey){{end}}{{if $command.returns.has_value}} + len(rvalue){{end}}),
+				extrasLength: uint8(extralen),
+				{{if $command.returns.has_cas}}cas: rcas,{{end}}
+			}
 
-		var extralen int
-		{{if $op.response.extra_length}}{{if gt $op.response.extra_length 0}}
-			var extrabuf [{{$op.response.extra_length}}]byte
-			{{range $extra := $op.response.extra}}
-				binary.BigEndian.Put{{$extra.type | lowerToUpperCamel}}(extrabuf[{{$extra.offset}}:], {{$extra.name}})
-			{{end}}
-			extralen = {{$op.response.extra_length}}
+			return rheader, {{if $command.returns.has_key}}rkey{{else}}nil{{end}}, {{if $command.returns.has_value}}rvalue{{else}}nil{{end}}, {{if $op.response.extra_length}}{{if gt $op.response.extra_length 0}}extrabuf[:]{{else}}nil{{end}}{{else}}nil{{end}}
 		{{end}}{{end}}
-
-		rheader := &binaryResponseHeader{
-			magic: MAGIC_RESPONSE,
-			opaque: header.opaque,
-			opcode: header.opcode,
-			{{if $command.returns.has_key}}keyLength: uint16(len(rkey)),{{end}}
-			status: 0,
-			totalBodyLength: uint32(extralen{{if $command.returns.has_key}} + len(rkey){{end}}{{if $command.returns.has_value}} + len(rvalue){{end}}),
-			extrasLength: uint8(extralen),
-			{{if $command.returns.has_cas}}cas: rcas,{{end}}
-		}
-
-		return rheader, {{if $command.returns.has_key}}rkey{{else}}nil{{end}}, {{if $command.returns.has_value}}rvalue{{else}}nil{{end}}, {{if $op.response.extra_length}}{{if gt $op.response.extra_length 0}}extrabuf[:]{{else}}nil{{end}}{{else}}nil{{end}}
-	{{end}}{{end}}
-}
+	}
 {{end}}
