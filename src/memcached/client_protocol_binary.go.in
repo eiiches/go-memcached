@@ -102,7 +102,6 @@ func recvResponse(cli *MemcachedClient) (*binaryResponseHeader, []byte, []byte, 
 		}
 
 		func parse{{$op.name}}Response(header *binaryResponseHeader, key []byte, value []byte, extra[]byte) ({{if $command.returns.has_key}}[]byte, {{end}}{{if $command.returns.has_value}}[]byte, {{end}}{{if $command.returns.has_flags}}uint32, {{end}}{{if $command.returns.has_cas}}uint64, {{end}}*MemcachedError) {
-
 			{{if $command.returns.has_cas}}rcas := header.cas{{end}}
 
 			{{if $op.response.extra_length}}
@@ -114,7 +113,6 @@ func recvResponse(cli *MemcachedClient) (*binaryResponseHeader, []byte, []byte, 
 			{{end}}
 
 			return {{if $command.returns.has_key}}key, {{end}}{{if $command.returns.has_value}}value, {{end}}{{if $command.returns.has_flags}}rflags, {{end}}{{if $command.returns.has_cas}}rcas, {{end}}nil
-
 		}
 	{{end}}{{end}}
 {{end}}

@@ -1,8 +1,9 @@
 package core
 
-import unsafe "unsafe"
+import "unsafe"
 import "bytes"
-import "fmt"
+
+// import "fmt"
 import "sync"
 import "sync/atomic"
 import "hash/fnv"
@@ -154,7 +155,7 @@ func (self *concurrentLruCache) Get(key []byte) ([]byte, uint64) {
 	ppseg_ := (*unsafe.Pointer)(unsafe.Pointer(&self.segments[sindex]))
 	pseg_ := atomic.LoadPointer(ppseg_)
 
-	fmt.Printf("segments[hash(%v) >> %d & %d = %d] = %v\n", string(key), self.segmentShift, self.segmentMask, sindex, pseg_)
+	// fmt.Printf("segments[hash(%v) >> %d & %d = %d] = %v\n", string(key), self.segmentShift, self.segmentMask, sindex, pseg_)
 	if pseg_ == nil {
 		return nil, 0
 	}

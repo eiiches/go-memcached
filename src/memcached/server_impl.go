@@ -2,15 +2,12 @@
 
 package memcached
 
-import "os"
-import "fmt"
-
 type serverCommand interface {
 	execute(server *MemcachedServer)
 }
 
 func (self *MemcachedServer) Set(key []byte, value []byte, opts *SetOptions) (cas uint64, err *MemcachedError) {
-	fmt.Fprintf(os.Stderr, "PUT %v = %v [cas: %v]\n", string(key), string(value), opts.Cas)
+	// fmt.Fprintf(os.Stderr, "PUT %v = %v [cas: %v]\n", string(key), string(value), opts.Cas)
 	if opts != nil && opts.Cas != 0 {
 		oldval, cas := self.cache.CompareAndSet(key, value, opts.Cas, opts.Expire)
 		if oldval == nil {
@@ -46,7 +43,7 @@ func (self *MemcachedServer) Replace(key []byte, value []byte, opts *ReplaceOpti
 
 func (self *MemcachedServer) Get(key []byte, opts *GetOptions) (value []byte, flags uint32, cas uint64, err *MemcachedError) {
 	rvalue, rcas := self.cache.Get(key)
-	fmt.Fprintf(os.Stderr, "GET %v = %v [cas: %v]\n", string(key), string(rvalue), rcas)
+	// fmt.Fprintf(os.Stderr, "GET %v = %v [cas: %v]\n", string(key), string(rvalue), rcas)
 	return rvalue, 0, rcas, nil
 }
 
@@ -100,7 +97,7 @@ func (self *MemcachedServer) Version(opts *VersionOptions) (err *MemcachedError)
 }
 
 func (self *MemcachedServer) GetWithKey(key []byte, opts *GetWithKeyOptions) ([]byte, []byte, uint32, uint64, *MemcachedError) {
-	rvalue, cas := self.cache.Get(key)
-	fmt.Fprintf(os.Stderr, "GETK %v = %v [cas: %v]\n", string(key), string(rvalue), cas)
-	return key, rvalue, 0, 0, nil
+	rvalue, rcas := self.cache.Get(key)
+	// fmt.Fprintf(os.Stderr, "GETK %v = %v [cas: %v]\n", string(key), string(rvalue), cas)
+	return key, rvalue, 0, rcas, nil
 }

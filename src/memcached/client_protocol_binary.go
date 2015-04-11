@@ -222,13 +222,11 @@ func formatGetRequest(key []byte, opts *GetOptions) (*binaryRequestHeader, []byt
 }
 
 func parseGetResponse(header *binaryResponseHeader, key []byte, value []byte, extra []byte) ([]byte, uint32, uint64, *MemcachedError) {
-
 	rcas := header.cas
 
 	rflags := binary.BigEndian.Uint32(extra[0:])
 
 	return value, rflags, rcas, nil
-
 }
 
 func formatSetRequest(key []byte, value []byte, opts *SetOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
@@ -261,11 +259,9 @@ func formatSetRequest(key []byte, value []byte, opts *SetOptions) (*binaryReques
 }
 
 func parseSetResponse(header *binaryResponseHeader, key []byte, value []byte, extra []byte) (uint64, *MemcachedError) {
-
 	rcas := header.cas
 
 	return rcas, nil
-
 }
 
 func formatAddRequest(key []byte, value []byte, opts *AddOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
@@ -298,11 +294,9 @@ func formatAddRequest(key []byte, value []byte, opts *AddOptions) (*binaryReques
 }
 
 func parseAddResponse(header *binaryResponseHeader, key []byte, value []byte, extra []byte) (uint64, *MemcachedError) {
-
 	rcas := header.cas
 
 	return rcas, nil
-
 }
 
 func formatReplaceRequest(key []byte, value []byte, opts *ReplaceOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
@@ -335,11 +329,9 @@ func formatReplaceRequest(key []byte, value []byte, opts *ReplaceOptions) (*bina
 }
 
 func parseReplaceResponse(header *binaryResponseHeader, key []byte, value []byte, extra []byte) (uint64, *MemcachedError) {
-
 	rcas := header.cas
 
 	return rcas, nil
-
 }
 
 func formatDeleteRequest(key []byte, opts *DeleteOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
@@ -368,7 +360,6 @@ func formatDeleteRequest(key []byte, opts *DeleteOptions) (*binaryRequestHeader,
 func parseDeleteResponse(header *binaryResponseHeader, key []byte, value []byte, extra []byte) *MemcachedError {
 
 	return nil
-
 }
 
 func formatIncrementRequest(key []byte, amount uint64, initial uint64, opts *IncrementOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
@@ -403,11 +394,9 @@ func formatIncrementRequest(key []byte, amount uint64, initial uint64, opts *Inc
 }
 
 func parseIncrementResponse(header *binaryResponseHeader, key []byte, value []byte, extra []byte) ([]byte, uint64, *MemcachedError) {
-
 	rcas := header.cas
 
 	return value, rcas, nil
-
 }
 
 func formatDecrementRequest(key []byte, amount uint64, initial uint64, opts *DecrementOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
@@ -442,11 +431,9 @@ func formatDecrementRequest(key []byte, amount uint64, initial uint64, opts *Dec
 }
 
 func parseDecrementResponse(header *binaryResponseHeader, key []byte, value []byte, extra []byte) ([]byte, uint64, *MemcachedError) {
-
 	rcas := header.cas
 
 	return value, rcas, nil
-
 }
 
 func formatQuitRequest(opts *QuitOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
@@ -470,7 +457,6 @@ func formatQuitRequest(opts *QuitOptions) (*binaryRequestHeader, []byte, []byte,
 func parseQuitResponse(header *binaryResponseHeader, key []byte, value []byte, extra []byte) *MemcachedError {
 
 	return nil
-
 }
 
 func formatFlushRequest(opts *FlushOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
@@ -494,7 +480,6 @@ func formatFlushRequest(opts *FlushOptions) (*binaryRequestHeader, []byte, []byt
 func parseFlushResponse(header *binaryResponseHeader, key []byte, value []byte, extra []byte) *MemcachedError {
 
 	return nil
-
 }
 
 func formatGetQRequest(key []byte, opts *GetOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
@@ -516,13 +501,11 @@ func formatGetQRequest(key []byte, opts *GetOptions) (*binaryRequestHeader, []by
 }
 
 func parseGetQResponse(header *binaryResponseHeader, key []byte, value []byte, extra []byte) ([]byte, uint32, uint64, *MemcachedError) {
-
 	rcas := header.cas
 
 	rflags := binary.BigEndian.Uint32(extra[0:])
 
 	return value, rflags, rcas, nil
-
 }
 
 func formatNopRequest(opts *NopOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
@@ -546,7 +529,6 @@ func formatNopRequest(opts *NopOptions) (*binaryRequestHeader, []byte, []byte, [
 func parseNopResponse(header *binaryResponseHeader, key []byte, value []byte, extra []byte) *MemcachedError {
 
 	return nil
-
 }
 
 func formatVersionRequest(opts *VersionOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
@@ -570,7 +552,6 @@ func formatVersionRequest(opts *VersionOptions) (*binaryRequestHeader, []byte, [
 func parseVersionResponse(header *binaryResponseHeader, key []byte, value []byte, extra []byte) *MemcachedError {
 
 	return nil
-
 }
 
 func formatGetWithKeyRequest(key []byte, opts *GetWithKeyOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
@@ -592,13 +573,11 @@ func formatGetWithKeyRequest(key []byte, opts *GetWithKeyOptions) (*binaryReques
 }
 
 func parseGetWithKeyResponse(header *binaryResponseHeader, key []byte, value []byte, extra []byte) ([]byte, []byte, uint32, uint64, *MemcachedError) {
-
 	rcas := header.cas
 
 	rflags := binary.BigEndian.Uint32(extra[0:])
 
 	return key, value, rflags, rcas, nil
-
 }
 
 func formatGetWithKeyQRequest(key []byte, opts *GetWithKeyOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
@@ -620,13 +599,11 @@ func formatGetWithKeyQRequest(key []byte, opts *GetWithKeyOptions) (*binaryReque
 }
 
 func parseGetWithKeyQResponse(header *binaryResponseHeader, key []byte, value []byte, extra []byte) ([]byte, []byte, uint32, uint64, *MemcachedError) {
-
 	rcas := header.cas
 
 	rflags := binary.BigEndian.Uint32(extra[0:])
 
 	return key, value, rflags, rcas, nil
-
 }
 
 func formatAppendRequest(key []byte, value []byte, opts *AppendOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
@@ -655,7 +632,6 @@ func formatAppendRequest(key []byte, value []byte, opts *AppendOptions) (*binary
 func parseAppendResponse(header *binaryResponseHeader, key []byte, value []byte, extra []byte) *MemcachedError {
 
 	return nil
-
 }
 
 func formatPrependRequest(key []byte, value []byte, opts *PrependOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
@@ -684,7 +660,6 @@ func formatPrependRequest(key []byte, value []byte, opts *PrependOptions) (*bina
 func parsePrependResponse(header *binaryResponseHeader, key []byte, value []byte, extra []byte) *MemcachedError {
 
 	return nil
-
 }
 
 func formatStatRequest(opts *StatOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
@@ -708,7 +683,6 @@ func formatStatRequest(opts *StatOptions) (*binaryRequestHeader, []byte, []byte,
 func parseStatResponse(header *binaryResponseHeader, key []byte, value []byte, extra []byte) *MemcachedError {
 
 	return nil
-
 }
 
 func formatSetQRequest(key []byte, value []byte, opts *SetOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
@@ -741,11 +715,9 @@ func formatSetQRequest(key []byte, value []byte, opts *SetOptions) (*binaryReque
 }
 
 func parseSetQResponse(header *binaryResponseHeader, key []byte, value []byte, extra []byte) (uint64, *MemcachedError) {
-
 	rcas := header.cas
 
 	return rcas, nil
-
 }
 
 func formatAddQRequest(key []byte, value []byte, opts *AddOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
@@ -778,11 +750,9 @@ func formatAddQRequest(key []byte, value []byte, opts *AddOptions) (*binaryReque
 }
 
 func parseAddQResponse(header *binaryResponseHeader, key []byte, value []byte, extra []byte) (uint64, *MemcachedError) {
-
 	rcas := header.cas
 
 	return rcas, nil
-
 }
 
 func formatReplaceQRequest(key []byte, value []byte, opts *ReplaceOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
@@ -815,11 +785,9 @@ func formatReplaceQRequest(key []byte, value []byte, opts *ReplaceOptions) (*bin
 }
 
 func parseReplaceQResponse(header *binaryResponseHeader, key []byte, value []byte, extra []byte) (uint64, *MemcachedError) {
-
 	rcas := header.cas
 
 	return rcas, nil
-
 }
 
 func formatDeleteQRequest(key []byte, opts *DeleteOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
@@ -848,7 +816,6 @@ func formatDeleteQRequest(key []byte, opts *DeleteOptions) (*binaryRequestHeader
 func parseDeleteQResponse(header *binaryResponseHeader, key []byte, value []byte, extra []byte) *MemcachedError {
 
 	return nil
-
 }
 
 func formatIncrementQRequest(key []byte, amount uint64, initial uint64, opts *IncrementOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
@@ -883,11 +850,9 @@ func formatIncrementQRequest(key []byte, amount uint64, initial uint64, opts *In
 }
 
 func parseIncrementQResponse(header *binaryResponseHeader, key []byte, value []byte, extra []byte) ([]byte, uint64, *MemcachedError) {
-
 	rcas := header.cas
 
 	return value, rcas, nil
-
 }
 
 func formatDecrementQRequest(key []byte, amount uint64, initial uint64, opts *DecrementOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
@@ -922,11 +887,9 @@ func formatDecrementQRequest(key []byte, amount uint64, initial uint64, opts *De
 }
 
 func parseDecrementQResponse(header *binaryResponseHeader, key []byte, value []byte, extra []byte) ([]byte, uint64, *MemcachedError) {
-
 	rcas := header.cas
 
 	return value, rcas, nil
-
 }
 
 func formatQuitQRequest(opts *QuitOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
@@ -950,7 +913,6 @@ func formatQuitQRequest(opts *QuitOptions) (*binaryRequestHeader, []byte, []byte
 func parseQuitQResponse(header *binaryResponseHeader, key []byte, value []byte, extra []byte) *MemcachedError {
 
 	return nil
-
 }
 
 func formatFlushQRequest(opts *FlushOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
@@ -974,7 +936,6 @@ func formatFlushQRequest(opts *FlushOptions) (*binaryRequestHeader, []byte, []by
 func parseFlushQResponse(header *binaryResponseHeader, key []byte, value []byte, extra []byte) *MemcachedError {
 
 	return nil
-
 }
 
 func formatAppendQRequest(key []byte, value []byte, opts *AppendOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
@@ -1003,7 +964,6 @@ func formatAppendQRequest(key []byte, value []byte, opts *AppendOptions) (*binar
 func parseAppendQResponse(header *binaryResponseHeader, key []byte, value []byte, extra []byte) *MemcachedError {
 
 	return nil
-
 }
 
 func formatPrependQRequest(key []byte, value []byte, opts *PrependOptions) (*binaryRequestHeader, []byte, []byte, []byte) {
@@ -1032,5 +992,4 @@ func formatPrependQRequest(key []byte, value []byte, opts *PrependOptions) (*bin
 func parsePrependQResponse(header *binaryResponseHeader, key []byte, value []byte, extra []byte) *MemcachedError {
 
 	return nil
-
 }
