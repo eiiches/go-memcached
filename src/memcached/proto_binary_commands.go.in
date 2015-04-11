@@ -49,7 +49,7 @@ func handle{{$op.name}}Request(cli Memcached, header *binaryRequestHeader, key [
 		{{end}}
 
 		{{range $extra := $op.request.extra}}
-			{{$extra.name}} := binary.BigEndian.{{$extra.type}}(extras[{{$extra.offset}}:])
+			{{$extra.name}} := binary.BigEndian.{{$extra.type | lowerToUpperCamel}}(extras[{{$extra.offset}}:])
 		{{end}}
 
 		opts := &{{$CommandName}}Options{
@@ -70,7 +70,7 @@ func handle{{$op.name}}Request(cli Memcached, header *binaryRequestHeader, key [
 		{{if $op.response.extra_length}}{{if gt $op.response.extra_length 0}}
 			var extrabuf [{{$op.response.extra_length}}]byte
 			{{range $extra := $op.response.extra}}
-				binary.BigEndian.Put{{$extra.type}}(extrabuf[{{$extra.offset}}:], {{$extra.name}})
+				binary.BigEndian.Put{{$extra.type | lowerToUpperCamel}}(extrabuf[{{$extra.offset}}:], {{$extra.name}})
 			{{end}}
 			extralen = {{$op.response.extra_length}}
 		{{end}}{{end}}

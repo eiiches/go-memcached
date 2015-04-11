@@ -4,6 +4,7 @@
 package main
 
 import "fmt"
+import "unicode"
 import "os/exec"
 import "os"
 import "gopkg.in/yaml.v2"
@@ -11,6 +12,12 @@ import "text/template"
 import "io/ioutil"
 import "strings"
 import "bytes"
+
+func lowerToUpperCamel(word string) string {
+	tmp := []rune(word)
+	tmp[0] = unicode.ToUpper(tmp[0])
+	return string(tmp)
+}
 
 func snakeToUpperCamel(word string) string {
 	var buffer bytes.Buffer
@@ -85,6 +92,7 @@ func processDirectory(config map[interface{}]interface{}, dirname string) {
 
 			t := template.Must(template.New("@").Funcs(template.FuncMap{
 				"snakeToUpperCamel": snakeToUpperCamel,
+				"lowerToUpperCamel": lowerToUpperCamel,
 				"isTrue":            isTrue,
 			}).Parse(string(in)))
 

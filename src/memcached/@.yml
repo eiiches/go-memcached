@@ -45,8 +45,8 @@ commands:
       has_key: true
       has_value: false
       extra:
-        - {var: "amount", type: "uint64"}
-        - {var: "initial", type: "uint64"}
+        - {name: "amount", type: "uint64"}
+        - {name: "initial", type: "uint64"}
     opts:
       has_expire: true
       has_cas: true
@@ -61,8 +61,8 @@ commands:
       has_key: true
       has_value: false
       extra:
-        - {var: "amount", type: "uint64"}
-        - {var: "initial", type: "uint64"}
+        - {name: "amount", type: "uint64"}
+        - {name: "initial", type: "uint64"}
     opts:
       has_expire: true
       has_cas: true
@@ -160,7 +160,7 @@ bin_ops:
     response: &bin_get_response
       extra_length: 4
       extra:
-        - {offset: 0, type: "Uint32", name: "rflags"}
+        - {offset: 0, type: "uint32", name: "rflags"}
 
   - name: Set
     command: *set
@@ -168,8 +168,8 @@ bin_ops:
     request: &bin_set_request
       extra_length: 8
       extra:
-        - {offset: 0, type: "Uint32", name: "flags"}
-        - {offset: 4, type: "Uint32", name: "expire"}
+        - {offset: 0, type: "uint32", name: "flags"}
+        - {offset: 4, type: "uint32", name: "expire"}
 
   - name: Add
     command: *add
@@ -177,8 +177,8 @@ bin_ops:
     request: &bin_add_request
       extra_length: 8
       extra:
-        - {offset: 0, type: "Uint32", name: "flags"}
-        - {offset: 4, type: "Uint32", name: "expire"}
+        - {offset: 0, type: "uint32", name: "flags"}
+        - {offset: 4, type: "uint32", name: "expire"}
 
   - name: Replace
     command: *replace
@@ -186,8 +186,8 @@ bin_ops:
     request: &bin_replace_request
       extra_length: 8
       extra:
-        - {offset: 0, type: "Uint32", name: "flags"}
-        - {offset: 4, type: "Uint32", name: "expire"}
+        - {offset: 0, type: "uint32", name: "flags"}
+        - {offset: 4, type: "uint32", name: "expire"}
 
   - name: Delete
     command: *delete
@@ -200,9 +200,9 @@ bin_ops:
       args: {extra: ["amount", "initial"]}
       extra_length: 20
       extra:
-        - {offset: 0, type: "Uint64", name: "amount"}
-        - {offset: 8, type: "Uint64", name: "initial"}
-        - {offset: 16, type: "Uint32", name: "expire"}
+        - {offset: 0, type: "uint64", name: "amount"}
+        - {offset: 8, type: "uint64", name: "initial"}
+        - {offset: 16, type: "uint32", name: "expire"}
 
   - name: Decrement
     command: *decrement
@@ -211,9 +211,9 @@ bin_ops:
       args: {extra: ["amount", "initial"]}
       extra_length: 20
       extra:
-        - {offset: 0, type: "Uint64", name: "amount"}
-        - {offset: 8, type: "Uint64", name: "initial"}
-        - {offset: 16, type: "Uint32", name: "expire"}
+        - {offset: 0, type: "uint64", name: "amount"}
+        - {offset: 8, type: "uint64", name: "initial"}
+        - {offset: 16, type: "uint32", name: "expire"}
 
   - name: Quit
     opcode: 0x07
@@ -245,7 +245,7 @@ bin_ops:
     response: &bin_get_with_key_response
       extra_length: 4
       extra:
-        - {offset: 0, type: "Uint32", name: "rflags"}
+        - {offset: 0, type: "uint32", name: "rflags"}
 
   - name: GetWithKeyQ
     command: *get_with_key
