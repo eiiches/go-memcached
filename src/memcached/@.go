@@ -41,15 +41,6 @@ func snakeToUpperCamel(word string) string {
 	return buffer.String()
 }
 
-func isTrue(value interface{}) bool {
-	switch t := value.(type) {
-	case bool:
-		return t
-	default:
-		return false
-	}
-}
-
 func loadConfig() map[interface{}]interface{} {
 	config, err := ioutil.ReadFile("@.yml")
 	if err != nil {
@@ -93,7 +84,6 @@ func processDirectory(config map[interface{}]interface{}, dirname string) {
 			t := template.Must(template.New("@").Funcs(template.FuncMap{
 				"snakeToUpperCamel": snakeToUpperCamel,
 				"lowerToUpperCamel": lowerToUpperCamel,
-				"isTrue":            isTrue,
 			}).Parse(string(in)))
 
 			cmd := exec.Command("gofmt")
