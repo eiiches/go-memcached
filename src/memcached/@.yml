@@ -8,6 +8,7 @@ commands:
       has_expire: true
       has_cas: true
       has_quiet: true
+      has_flags: true
     returns:
       has_cas: true
 
@@ -20,6 +21,7 @@ commands:
       has_expire: true
       has_cas: true
       has_quiet: true
+      has_flags: true
     returns:
       has_cas: true
 
@@ -78,6 +80,7 @@ commands:
       has_expire: true
       has_cas: true
       has_quiet: true
+      has_flags: true
     returns:
       has_cas: true
 
@@ -150,16 +153,11 @@ commands:
       has_cas: true
       has_flags: true
 
-binary_commands:
+bin_ops:
   - name: Get
     command: *get
     opcode: 0x00
-    request:
-      has_extras: false
-      has_key: true
-      has_value: false
-      has_cas: false
-    response:
+    response: &bin_get_response
       extra_length: 4
       extra:
         - {offset: 0, type: "Uint32", name: "rflags"}
@@ -167,103 +165,84 @@ binary_commands:
   - name: Set
     command: *set
     opcode: 0x01
-    request:
-      has_key: true
-      has_value: true
-      has_expire: {offset: 4}
-      has_cas: true
-      has_magic: {offset: 0}
-      has_extras: {size: 8}
-    # cas
+    request: &bin_set_request
+      extra_length: 8
+      extra:
+        - {offset: 0, type: "Uint32", name: "flags"}
+        - {offset: 4, type: "Uint32", name: "expire"}
+
   - name: Add
     command: *add
     opcode: 0x02
-    request:
-      has_key: true
-      has_value: true
-      has_expire: {offset: 4}
-      has_cas: true
-      has_magic: {offset: 0}
-    # cas
+    request: &bin_add_request
+      extra_length: 8
+      extra:
+        - {offset: 0, type: "Uint32", name: "flags"}
+        - {offset: 4, type: "Uint32", name: "expire"}
+
   - name: Replace
     command: *replace
     opcode: 0x03
-    request:
-      has_key: true
-      has_value: true
-      has_expire: {offset: 4}
-      has_cas: true
-      has_magic: {offset: 0}
-    # cas
+    request: &bin_replace_request
+      extra_length: 8
+      extra:
+        - {offset: 0, type: "Uint32", name: "flags"}
+        - {offset: 4, type: "Uint32", name: "expire"}
+
   - name: Delete
     command: *delete
     opcode: 0x04
-    request:
-      has_key: true
-      has_cas: true
-    # N/A
+
   - name: Increment
     command: *increment
     opcode: 0x05
-    request:
-      has_key: true
-      has_value: false
-      has_extras: {size: 20}
-      has_cas: true
-      has_expire: {offset: 16}
-      extras:
-        - {var: "amount", type: "Uint64", offset: 0}
-        - {var: "initial", type: "Uint64", offset: 8}
+    request: &bin_increment_request
       args: {extra: ["amount", "initial"]}
-    # value, cas
+      extra_length: 20
+      extra:
+        - {offset: 0, type: "Uint64", name: "amount"}
+        - {offset: 8, type: "Uint64", name: "initial"}
+        - {offset: 16, type: "Uint32", name: "expire"}
+
   - name: Decrement
     command: *decrement
     opcode: 0x06
-    request:
-      has_key: true
-      has_value: false
-      has_extras: {size: 20}
-      has_cas: true
-      has_expire: {offset: 16}
-      extras:
-        - {var: "amount", type: "Uint64", offset: 0}
-        - {var: "initial", type: "Uint64", offset: 8}
+    request: &bin_decrement_request
       args: {extra: ["amount", "initial"]}
-    # value, cas
+      extra_length: 20
+      extra:
+        - {offset: 0, type: "Uint64", name: "amount"}
+        - {offset: 8, type: "Uint64", name: "initial"}
+        - {offset: 16, type: "Uint32", name: "expire"}
+
   - name: Quit
     opcode: 0x07
     command: *quit
+
   - name: Flush
     command: *flush
     opcode: 0x08
+
   - name: GetQ
     command: *get
     opcode: 0x09
     request:
-      has_extras: false
-      has_key: true
-      has_value: false
       opts: {extra: {quiet: true}}
     response:
-      extra_length: 4
-      extra:
-        - {offset: 0, type: "Uint32", name: "rflags"}
+      <<: *bin_get_response
 
   - name: Nop
     opcode: 0x0A
     command: *nop
+
   - name: Version
     opcode: 0x0B
     command: *version
+
   - name: GetWithKey
     command: *get_with_key
     opcode: 0x0C
-    request:
-      has_extras: false
-      has_key: true
-      has_value: false
-      has_cas: false
-    response:
+    response: &bin_get_with_key_response
       extra_length: 4
       extra:
         - {offset: 0, type: "Uint32", name: "rflags"}
@@ -272,114 +251,83 @@ binary_commands:
     command: *get_with_key
     opcode: 0x0D
     request:
-      has_extras: false
-      has_key: true
-      has_value: false
-      has_cas: false
       opts: {extra: {quiet: true}}
     response:
-      extra_length: 4
-      extra:
-        - {offset: 0, type: "Uint32", name: "rflags"}
+      <<: *bin_get_with_key_response
 
   - name: Append
     command: *append
     opcode: 0x0E
-    request:
-      has_key: true
-      has_value: true
+
   - name: Prepend
     command: *prepend
     opcode: 0x0F
-    request:
-      has_key: true
-      has_value: true
+
   - name: Stat
     command: *stat
     opcode: 0x10
+
   - name: SetQ
     command: *set
     opcode: 0x11
     request:
-      has_key: true
-      has_value: true
-      has_expire: {offset: 4}
+      <<: *bin_set_request
       opts: {extra: {quiet: true}}
+
   - name: AddQ
     command: *add
     opcode: 0x12
     request:
-      has_key: true
-      has_value: true
-      has_expire: {offset: 4}
-      has_cas: true
-      has_magic: {offset: 0}
+      <<: *bin_add_request
       opts: {extra: {quiet: true}}
+
   - name: ReplaceQ
     command: *replace
     opcode: 0x13
     request:
-      has_key: true
-      has_value: true
-      has_expire: {offset: 4}
-      has_cas: true
-      has_magic: {offset: 0}
+      <<: *bin_replace_request
       opts: {extra: {quiet: true}}
+
   - name: DeleteQ
     command: *delete
     opcode: 0x14
     request:
-      has_key: true
       opts: {extra: {quiet: true}}
+
   - name: IncrementQ
     command: *increment
     opcode: 0x15
     request:
-      has_key: true
-      has_value: false
-      has_extras: {size: 20}
-      has_cas: true
-      has_expire: {offset: 16}
-      extras:
-        - {var: "amount", type: "Uint64", offset: 0}
-        - {var: "initial", type: "Uint64", offset: 8}
+      <<: *bin_increment_request
       opts: {extra: {quiet: true}}
-      args: {extra: ["amount", "initial"]}
+
   - name: DecrementQ
     command: *decrement
     opcode: 0x16
     request:
-      has_key: true
-      has_value: false
-      has_extras: {size: 20}
-      has_cas: true
-      has_expire: {offset: 16}
-      extras:
-        - {var: "amount", type: "Uint64", offset: 0}
-        - {var: "initial", type: "Uint64", offset: 8}
+      <<: *bin_decrement_request
       opts: {extra: {quiet: true}}
-      args: {extra: ["amount", "initial"]}
+
   - name: QuitQ
     opcode: 0x17
     command: *quit
     request:
       opts: {extra: {quiet: true}}
+
   - name: FlushQ
     command: *flush
     opcode: 0x18
     request:
       opts: {extra: {quiet: true}}
+
   - name: AppendQ
     command: *append
     opcode: 0x19
     request:
-      has_key: true
-      has_value: true
       opts: {extra: {quiet: true}}
+
   - name: PrependQ
     command: *prepend
     opcode: 0x1A
     request:
-      has_key: true
-      has_value: true
       opts: {extra: {quiet: true}}

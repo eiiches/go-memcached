@@ -5,8 +5,6 @@
 
 package memcached
 
-import "os"
-import "fmt"
 import "encoding/binary"
 
 type binaryRequestHandler func(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (rheader *binaryResponseHeader, rkey []byte, rvalue []byte, rextras []byte)
@@ -53,6 +51,7 @@ func binaryErrorResponse(header *binaryRequestHeader, err *MemcachedError) (*bin
 }
 
 func handleGetRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (*binaryResponseHeader, []byte, []byte, []byte) {
+
 	if len(key) == 0 {
 		return binaryErrorResponse(header, newInvalidArgumentsError("Get MUST have key"))
 	}
@@ -96,6 +95,7 @@ func handleGetRequest(cli Memcached, header *binaryRequestHeader, key []byte, va
 }
 
 func handleSetRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (*binaryResponseHeader, []byte, []byte, []byte) {
+
 	if len(key) == 0 {
 		return binaryErrorResponse(header, newInvalidArgumentsError("Set MUST have key"))
 	}
@@ -108,15 +108,14 @@ func handleSetRequest(cli Memcached, header *binaryRequestHeader, key []byte, va
 		return binaryErrorResponse(header, newInvalidArgumentsError("Set MUST have extras of exactly 8 bytes"))
 	}
 
-	magic := binary.BigEndian.Uint32(extras[0:])
-	if magic != MAGIC_DEADBEEF {
-		fmt.Fprintf(os.Stderr, "Invalid magic for Set: %+v\n", magic)
-		// return nil, fmt.Errorf("Invalid magic for Set: %+v", magic)
-	}
+	flags := binary.BigEndian.Uint32(extras[0:])
+
+	expire := binary.BigEndian.Uint32(extras[4:])
 
 	opts := &SetOptions{
-		Expire: binary.BigEndian.Uint32(extras[4:]),
+		Expire: expire,
 		Cas:    header.cas,
+		Flags:  flags,
 	}
 	rcas, rerr := cli.Set(key, value, opts)
 
@@ -142,6 +141,7 @@ func handleSetRequest(cli Memcached, header *binaryRequestHeader, key []byte, va
 }
 
 func handleAddRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (*binaryResponseHeader, []byte, []byte, []byte) {
+
 	if len(key) == 0 {
 		return binaryErrorResponse(header, newInvalidArgumentsError("Add MUST have key"))
 	}
@@ -150,19 +150,18 @@ func handleAddRequest(cli Memcached, header *binaryRequestHeader, key []byte, va
 		return binaryErrorResponse(header, newInvalidArgumentsError("Add MUST have value"))
 	}
 
-	if len(extras) > 0 {
-		return binaryErrorResponse(header, newInvalidArgumentsError("Add MUST NOT have extras"))
+	if len(extras) != 8 {
+		return binaryErrorResponse(header, newInvalidArgumentsError("Add MUST have extras of exactly 8 bytes"))
 	}
 
-	magic := binary.BigEndian.Uint32(extras[0:])
-	if magic != MAGIC_DEADBEEF {
-		fmt.Fprintf(os.Stderr, "Invalid magic for Add: %+v\n", magic)
-		// return nil, fmt.Errorf("Invalid magic for Add: %+v", magic)
-	}
+	flags := binary.BigEndian.Uint32(extras[0:])
+
+	expire := binary.BigEndian.Uint32(extras[4:])
 
 	opts := &AddOptions{
-		Expire: binary.BigEndian.Uint32(extras[4:]),
+		Expire: expire,
 		Cas:    header.cas,
+		Flags:  flags,
 	}
 	rcas, rerr := cli.Add(key, value, opts)
 
@@ -188,6 +187,7 @@ func handleAddRequest(cli Memcached, header *binaryRequestHeader, key []byte, va
 }
 
 func handleReplaceRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (*binaryResponseHeader, []byte, []byte, []byte) {
+
 	if len(key) == 0 {
 		return binaryErrorResponse(header, newInvalidArgumentsError("Replace MUST have key"))
 	}
@@ -196,19 +196,18 @@ func handleReplaceRequest(cli Memcached, header *binaryRequestHeader, key []byte
 		return binaryErrorResponse(header, newInvalidArgumentsError("Replace MUST have value"))
 	}
 
-	if len(extras) > 0 {
-		return binaryErrorResponse(header, newInvalidArgumentsError("Replace MUST NOT have extras"))
+	if len(extras) != 8 {
+		return binaryErrorResponse(header, newInvalidArgumentsError("Replace MUST have extras of exactly 8 bytes"))
 	}
 
-	magic := binary.BigEndian.Uint32(extras[0:])
-	if magic != MAGIC_DEADBEEF {
-		fmt.Fprintf(os.Stderr, "Invalid magic for Replace: %+v\n", magic)
-		// return nil, fmt.Errorf("Invalid magic for Replace: %+v", magic)
-	}
+	flags := binary.BigEndian.Uint32(extras[0:])
+
+	expire := binary.BigEndian.Uint32(extras[4:])
 
 	opts := &ReplaceOptions{
-		Expire: binary.BigEndian.Uint32(extras[4:]),
+		Expire: expire,
 		Cas:    header.cas,
+		Flags:  flags,
 	}
 	rcas, rerr := cli.Replace(key, value, opts)
 
@@ -234,6 +233,7 @@ func handleReplaceRequest(cli Memcached, header *binaryRequestHeader, key []byte
 }
 
 func handleDeleteRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (*binaryResponseHeader, []byte, []byte, []byte) {
+
 	if len(key) == 0 {
 		return binaryErrorResponse(header, newInvalidArgumentsError("Delete MUST have key"))
 	}
@@ -273,6 +273,7 @@ func handleDeleteRequest(cli Memcached, header *binaryRequestHeader, key []byte,
 }
 
 func handleIncrementRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (*binaryResponseHeader, []byte, []byte, []byte) {
+
 	if len(key) == 0 {
 		return binaryErrorResponse(header, newInvalidArgumentsError("Increment MUST have key"))
 	}
@@ -289,8 +290,10 @@ func handleIncrementRequest(cli Memcached, header *binaryRequestHeader, key []by
 
 	initial := binary.BigEndian.Uint64(extras[8:])
 
+	expire := binary.BigEndian.Uint32(extras[16:])
+
 	opts := &IncrementOptions{
-		Expire: binary.BigEndian.Uint32(extras[16:]),
+		Expire: expire,
 		Cas:    header.cas,
 	}
 	rvalue, rcas, rerr := cli.Increment(key, amount, initial, opts)
@@ -317,6 +320,7 @@ func handleIncrementRequest(cli Memcached, header *binaryRequestHeader, key []by
 }
 
 func handleDecrementRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (*binaryResponseHeader, []byte, []byte, []byte) {
+
 	if len(key) == 0 {
 		return binaryErrorResponse(header, newInvalidArgumentsError("Decrement MUST have key"))
 	}
@@ -333,8 +337,10 @@ func handleDecrementRequest(cli Memcached, header *binaryRequestHeader, key []by
 
 	initial := binary.BigEndian.Uint64(extras[8:])
 
+	expire := binary.BigEndian.Uint32(extras[16:])
+
 	opts := &DecrementOptions{
-		Expire: binary.BigEndian.Uint32(extras[16:]),
+		Expire: expire,
 		Cas:    header.cas,
 	}
 	rvalue, rcas, rerr := cli.Decrement(key, amount, initial, opts)
@@ -361,6 +367,7 @@ func handleDecrementRequest(cli Memcached, header *binaryRequestHeader, key []by
 }
 
 func handleQuitRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (*binaryResponseHeader, []byte, []byte, []byte) {
+
 	if len(key) > 0 {
 		return binaryErrorResponse(header, newInvalidArgumentsError("Quit MUST NOT have key"))
 	}
@@ -397,6 +404,7 @@ func handleQuitRequest(cli Memcached, header *binaryRequestHeader, key []byte, v
 }
 
 func handleFlushRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (*binaryResponseHeader, []byte, []byte, []byte) {
+
 	if len(key) > 0 {
 		return binaryErrorResponse(header, newInvalidArgumentsError("Flush MUST NOT have key"))
 	}
@@ -433,6 +441,7 @@ func handleFlushRequest(cli Memcached, header *binaryRequestHeader, key []byte, 
 }
 
 func handleGetQRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (*binaryResponseHeader, []byte, []byte, []byte) {
+
 	if len(key) == 0 {
 		return binaryErrorResponse(header, newInvalidArgumentsError("GetQ MUST have key"))
 	}
@@ -479,6 +488,7 @@ func handleGetQRequest(cli Memcached, header *binaryRequestHeader, key []byte, v
 }
 
 func handleNopRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (*binaryResponseHeader, []byte, []byte, []byte) {
+
 	if len(key) > 0 {
 		return binaryErrorResponse(header, newInvalidArgumentsError("Nop MUST NOT have key"))
 	}
@@ -515,6 +525,7 @@ func handleNopRequest(cli Memcached, header *binaryRequestHeader, key []byte, va
 }
 
 func handleVersionRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (*binaryResponseHeader, []byte, []byte, []byte) {
+
 	if len(key) > 0 {
 		return binaryErrorResponse(header, newInvalidArgumentsError("Version MUST NOT have key"))
 	}
@@ -551,6 +562,7 @@ func handleVersionRequest(cli Memcached, header *binaryRequestHeader, key []byte
 }
 
 func handleGetWithKeyRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (*binaryResponseHeader, []byte, []byte, []byte) {
+
 	if len(key) == 0 {
 		return binaryErrorResponse(header, newInvalidArgumentsError("GetWithKey MUST have key"))
 	}
@@ -594,6 +606,7 @@ func handleGetWithKeyRequest(cli Memcached, header *binaryRequestHeader, key []b
 }
 
 func handleGetWithKeyQRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (*binaryResponseHeader, []byte, []byte, []byte) {
+
 	if len(key) == 0 {
 		return binaryErrorResponse(header, newInvalidArgumentsError("GetWithKeyQ MUST have key"))
 	}
@@ -640,6 +653,7 @@ func handleGetWithKeyQRequest(cli Memcached, header *binaryRequestHeader, key []
 }
 
 func handleAppendRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (*binaryResponseHeader, []byte, []byte, []byte) {
+
 	if len(key) == 0 {
 		return binaryErrorResponse(header, newInvalidArgumentsError("Append MUST have key"))
 	}
@@ -679,6 +693,7 @@ func handleAppendRequest(cli Memcached, header *binaryRequestHeader, key []byte,
 }
 
 func handlePrependRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (*binaryResponseHeader, []byte, []byte, []byte) {
+
 	if len(key) == 0 {
 		return binaryErrorResponse(header, newInvalidArgumentsError("Prepend MUST have key"))
 	}
@@ -718,6 +733,7 @@ func handlePrependRequest(cli Memcached, header *binaryRequestHeader, key []byte
 }
 
 func handleStatRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (*binaryResponseHeader, []byte, []byte, []byte) {
+
 	if len(key) > 0 {
 		return binaryErrorResponse(header, newInvalidArgumentsError("Stat MUST NOT have key"))
 	}
@@ -754,6 +770,7 @@ func handleStatRequest(cli Memcached, header *binaryRequestHeader, key []byte, v
 }
 
 func handleSetQRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (*binaryResponseHeader, []byte, []byte, []byte) {
+
 	if len(key) == 0 {
 		return binaryErrorResponse(header, newInvalidArgumentsError("SetQ MUST have key"))
 	}
@@ -762,13 +779,18 @@ func handleSetQRequest(cli Memcached, header *binaryRequestHeader, key []byte, v
 		return binaryErrorResponse(header, newInvalidArgumentsError("SetQ MUST have value"))
 	}
 
-	if len(extras) > 0 {
-		return binaryErrorResponse(header, newInvalidArgumentsError("SetQ MUST NOT have extras"))
+	if len(extras) != 8 {
+		return binaryErrorResponse(header, newInvalidArgumentsError("SetQ MUST have extras of exactly 8 bytes"))
 	}
 
+	flags := binary.BigEndian.Uint32(extras[0:])
+
+	expire := binary.BigEndian.Uint32(extras[4:])
+
 	opts := &SetOptions{
-		Expire: binary.BigEndian.Uint32(extras[4:]),
+		Expire: expire,
 		Cas:    header.cas,
+		Flags:  flags,
 
 		Quiet: true,
 	}
@@ -796,6 +818,7 @@ func handleSetQRequest(cli Memcached, header *binaryRequestHeader, key []byte, v
 }
 
 func handleAddQRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (*binaryResponseHeader, []byte, []byte, []byte) {
+
 	if len(key) == 0 {
 		return binaryErrorResponse(header, newInvalidArgumentsError("AddQ MUST have key"))
 	}
@@ -804,19 +827,18 @@ func handleAddQRequest(cli Memcached, header *binaryRequestHeader, key []byte, v
 		return binaryErrorResponse(header, newInvalidArgumentsError("AddQ MUST have value"))
 	}
 
-	if len(extras) > 0 {
-		return binaryErrorResponse(header, newInvalidArgumentsError("AddQ MUST NOT have extras"))
+	if len(extras) != 8 {
+		return binaryErrorResponse(header, newInvalidArgumentsError("AddQ MUST have extras of exactly 8 bytes"))
 	}
 
-	magic := binary.BigEndian.Uint32(extras[0:])
-	if magic != MAGIC_DEADBEEF {
-		fmt.Fprintf(os.Stderr, "Invalid magic for AddQ: %+v\n", magic)
-		// return nil, fmt.Errorf("Invalid magic for AddQ: %+v", magic)
-	}
+	flags := binary.BigEndian.Uint32(extras[0:])
+
+	expire := binary.BigEndian.Uint32(extras[4:])
 
 	opts := &AddOptions{
-		Expire: binary.BigEndian.Uint32(extras[4:]),
+		Expire: expire,
 		Cas:    header.cas,
+		Flags:  flags,
 
 		Quiet: true,
 	}
@@ -844,6 +866,7 @@ func handleAddQRequest(cli Memcached, header *binaryRequestHeader, key []byte, v
 }
 
 func handleReplaceQRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (*binaryResponseHeader, []byte, []byte, []byte) {
+
 	if len(key) == 0 {
 		return binaryErrorResponse(header, newInvalidArgumentsError("ReplaceQ MUST have key"))
 	}
@@ -852,19 +875,18 @@ func handleReplaceQRequest(cli Memcached, header *binaryRequestHeader, key []byt
 		return binaryErrorResponse(header, newInvalidArgumentsError("ReplaceQ MUST have value"))
 	}
 
-	if len(extras) > 0 {
-		return binaryErrorResponse(header, newInvalidArgumentsError("ReplaceQ MUST NOT have extras"))
+	if len(extras) != 8 {
+		return binaryErrorResponse(header, newInvalidArgumentsError("ReplaceQ MUST have extras of exactly 8 bytes"))
 	}
 
-	magic := binary.BigEndian.Uint32(extras[0:])
-	if magic != MAGIC_DEADBEEF {
-		fmt.Fprintf(os.Stderr, "Invalid magic for ReplaceQ: %+v\n", magic)
-		// return nil, fmt.Errorf("Invalid magic for ReplaceQ: %+v", magic)
-	}
+	flags := binary.BigEndian.Uint32(extras[0:])
+
+	expire := binary.BigEndian.Uint32(extras[4:])
 
 	opts := &ReplaceOptions{
-		Expire: binary.BigEndian.Uint32(extras[4:]),
+		Expire: expire,
 		Cas:    header.cas,
+		Flags:  flags,
 
 		Quiet: true,
 	}
@@ -892,6 +914,7 @@ func handleReplaceQRequest(cli Memcached, header *binaryRequestHeader, key []byt
 }
 
 func handleDeleteQRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (*binaryResponseHeader, []byte, []byte, []byte) {
+
 	if len(key) == 0 {
 		return binaryErrorResponse(header, newInvalidArgumentsError("DeleteQ MUST have key"))
 	}
@@ -933,6 +956,7 @@ func handleDeleteQRequest(cli Memcached, header *binaryRequestHeader, key []byte
 }
 
 func handleIncrementQRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (*binaryResponseHeader, []byte, []byte, []byte) {
+
 	if len(key) == 0 {
 		return binaryErrorResponse(header, newInvalidArgumentsError("IncrementQ MUST have key"))
 	}
@@ -949,8 +973,10 @@ func handleIncrementQRequest(cli Memcached, header *binaryRequestHeader, key []b
 
 	initial := binary.BigEndian.Uint64(extras[8:])
 
+	expire := binary.BigEndian.Uint32(extras[16:])
+
 	opts := &IncrementOptions{
-		Expire: binary.BigEndian.Uint32(extras[16:]),
+		Expire: expire,
 		Cas:    header.cas,
 
 		Quiet: true,
@@ -979,6 +1005,7 @@ func handleIncrementQRequest(cli Memcached, header *binaryRequestHeader, key []b
 }
 
 func handleDecrementQRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (*binaryResponseHeader, []byte, []byte, []byte) {
+
 	if len(key) == 0 {
 		return binaryErrorResponse(header, newInvalidArgumentsError("DecrementQ MUST have key"))
 	}
@@ -995,8 +1022,10 @@ func handleDecrementQRequest(cli Memcached, header *binaryRequestHeader, key []b
 
 	initial := binary.BigEndian.Uint64(extras[8:])
 
+	expire := binary.BigEndian.Uint32(extras[16:])
+
 	opts := &DecrementOptions{
-		Expire: binary.BigEndian.Uint32(extras[16:]),
+		Expire: expire,
 		Cas:    header.cas,
 
 		Quiet: true,
@@ -1025,6 +1054,7 @@ func handleDecrementQRequest(cli Memcached, header *binaryRequestHeader, key []b
 }
 
 func handleQuitQRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (*binaryResponseHeader, []byte, []byte, []byte) {
+
 	if len(key) > 0 {
 		return binaryErrorResponse(header, newInvalidArgumentsError("QuitQ MUST NOT have key"))
 	}
@@ -1064,6 +1094,7 @@ func handleQuitQRequest(cli Memcached, header *binaryRequestHeader, key []byte, 
 }
 
 func handleFlushQRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (*binaryResponseHeader, []byte, []byte, []byte) {
+
 	if len(key) > 0 {
 		return binaryErrorResponse(header, newInvalidArgumentsError("FlushQ MUST NOT have key"))
 	}
@@ -1103,6 +1134,7 @@ func handleFlushQRequest(cli Memcached, header *binaryRequestHeader, key []byte,
 }
 
 func handleAppendQRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (*binaryResponseHeader, []byte, []byte, []byte) {
+
 	if len(key) == 0 {
 		return binaryErrorResponse(header, newInvalidArgumentsError("AppendQ MUST have key"))
 	}
@@ -1144,6 +1176,7 @@ func handleAppendQRequest(cli Memcached, header *binaryRequestHeader, key []byte
 }
 
 func handlePrependQRequest(cli Memcached, header *binaryRequestHeader, key []byte, value []byte, extras []byte) (*binaryResponseHeader, []byte, []byte, []byte) {
+
 	if len(key) == 0 {
 		return binaryErrorResponse(header, newInvalidArgumentsError("PrependQ MUST have key"))
 	}

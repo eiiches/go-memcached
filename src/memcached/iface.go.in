@@ -24,6 +24,7 @@ type Memcached interface {
 		{{if $command.opts.has_expire}} Expire uint32 {{end}}
 		{{if $command.opts.has_cas}}    Cas    uint64 {{end}}
 		{{if $command.opts.has_quiet}}  Quiet  bool   {{end}}
+		{{if $command.opts.has_flags}}  Flags  uint32 {{end}}
 	}
 {{end}}{{end}}
 

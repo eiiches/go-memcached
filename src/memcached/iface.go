@@ -50,6 +50,7 @@ type AddOptions struct {
 	Expire uint32
 	Cas    uint64
 	Quiet  bool
+	Flags  uint32
 }
 
 func Replace(key []byte, value []byte, opts *ReplaceOptions) *commandReplace {
@@ -65,6 +66,7 @@ type ReplaceOptions struct {
 	Expire uint32
 	Cas    uint64
 	Quiet  bool
+	Flags  uint32
 }
 
 func Get(key []byte, opts *GetOptions) *commandGet {
@@ -128,6 +130,7 @@ type SetOptions struct {
 	Expire uint32
 	Cas    uint64
 	Quiet  bool
+	Flags  uint32
 }
 
 func Delete(key []byte, opts *DeleteOptions) *commandDelete {
