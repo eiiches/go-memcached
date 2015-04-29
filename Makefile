@@ -2,6 +2,7 @@
 
 null :=
 
+build_flags := -x -gcflags '-m'
 build_flags := -x
 
 targets := \
@@ -34,7 +35,7 @@ all: $(targets)
 generate: $(generated_sources)
 
 install: $(generated_sources) $(sources)
-	go install github.com/eiiches/go-memcached/memcached
+	go install $(build_flags) github.com/eiiches/go-memcached/memcached
 
 clean:
 	$(RM) $(generated_sources) $(targets)
