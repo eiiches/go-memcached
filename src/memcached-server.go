@@ -5,8 +5,25 @@ import "fmt"
 import "os"
 import "os/signal"
 import "runtime"
+import "runtime/pprof"
+import "flag"
+
+var (
+	pprofFile string
+)
 
 func main() {
+	flag.StringVar(&pprofFile, "pprof", "", "write pprof output to file")
+	flag.Parse()
+	if pprofFile != "" {
+		f, err := os.Create(pprofFile)
+		if err != nil {
+			panic(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
+
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	server := memcached.NewMemcachedServer()
@@ -35,8 +52,4 @@ func main() {
 	}()
 
 	server.Serve()
-
-	// server.Call(memcached.Set([]byte("key"), []byte("value")).WithExpire(10).WithCas(1234))
-	// server.Call(memcached.Add([]byte("key"), []byte("value")).WithExpire(10))
-	// server.Multi(memcached.Add([]byte("key"), []byte("value")))
 }
