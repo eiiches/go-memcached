@@ -1,19 +1,57 @@
-package concurrent
+package core
 
-import unsafe "unsafe"
+import "unsafe"
 import "bytes"
-import "fmt"
+
+// import "fmt"
 import "sync"
 import "sync/atomic"
 import "hash/fnv"
 
-// import "sync/atomic"
+type LruCache interface {
+	// equivalent to SET operation
+	Put(key []byte, value []byte, expire uint32) (oldval []byte, newcas uint64)
+
+	// equivalent to COMPARE_AND_SET, COMPARE_AND_REPLACE
+	CompareAndSet(key []byte, value []byte, cas uint64, expire uint32) (oldval []byte, newcas uint64)
+
+	// equivalent to GET operation
+	Get(key []byte) ([]byte, uint64) /* value and CAS token */
+
+	// DELETE
+	Remove(key []byte) []byte
+
+	// COMPARE_AND_DELETE
+	CompareAndRemove(key []byte, cas uint64) []byte
+
+	// INCREMENT and DECREMENT
+	Increment(key []byte, initial uint64, incr uint64, expire uint32) []byte
+	Decrement(key []byte, initial uint64, decr uint64, expire uint32) []byte
+
+	// REPLACE operation, which MUST fail if the item doesn't exist
+	Replace(key []byte, value []byte, expire uint32) (success bool, newcas uint64)
+
+	// equivalent to ADD operation, which MUST fail if the item already exists
+	// COMPARE_AND_ADD always fails
+	PutIfAbsent(key []byte, value []byte, expire uint32) []byte
+
+	// APPEND
+	Append(key []byte, value []byte, expire uint32) []byte
+
+	// PREPEND
+	Prepend(key []byte, value []byte, expire uint32) []byte
+
+	Clear()
+}
 
 type entry_t struct {
-	hash  uint32
-	key   []byte
-	value []byte
-	next  *entry_t
+	key    []byte
+	hash   uint32
+	next   *entry_t
+	expire uint64
+	value  []byte
+	cas    uint64
+	flags  uint32
 }
 
 type segment_t struct {
@@ -75,13 +113,16 @@ func (self *segment_t) put(key []byte, h uint32, value []byte, onlyIfAbsent bool
 	return oldvalue
 }
 
-type ConcurrentHashMap struct {
-	segments     []*segment_t
-	segmentMask  uint32
-	segmentShift uint32
+// PutIfAbsent("hoge", "fuga").WithExpire(3).IfCasMatch(102)
+
+type concurrentLruCache struct {
+	segments       []*segment_t
+	segmentMask    uint32
+	segmentShift   uint32
+	maxMemoryBytes uint64
 }
 
-func NewConcurrentHashMap() *ConcurrentHashMap {
+func NewLruCache(maxMemoryBytes uint64) LruCache {
 	concurrency := 24
 
 	// use MSB (Most-Significat Bits) of the hash(key) to distribute keys into segments (i.e buckets).
@@ -92,10 +133,11 @@ func NewConcurrentHashMap() *ConcurrentHashMap {
 		ssize = ssize << 1
 	}
 
-	self := &ConcurrentHashMap{
-		segments:     make([]*segment_t, 32),
-		segmentMask:  uint32(ssize - 1),
-		segmentShift: uint32(32 - sshift),
+	self := &concurrentLruCache{
+		segments:       make([]*segment_t, 32),
+		segmentMask:    uint32(ssize - 1),
+		segmentShift:   uint32(32 - sshift),
+		maxMemoryBytes: maxMemoryBytes,
 	}
 
 	return self
@@ -107,16 +149,16 @@ func hash32(key []byte) uint32 {
 	return hasher.Sum32()
 }
 
-func (self *ConcurrentHashMap) Get(key []byte) []byte {
+func (self *concurrentLruCache) Get(key []byte) ([]byte, uint64) {
 	h := hash32(key)
 	sindex := (h >> self.segmentShift) & self.segmentMask
 
 	ppseg_ := (*unsafe.Pointer)(unsafe.Pointer(&self.segments[sindex]))
 	pseg_ := atomic.LoadPointer(ppseg_)
 
-	fmt.Printf("segments[hash(%v) >> %d & %d = %d] = %v\n", string(key), self.segmentShift, self.segmentMask, sindex, pseg_)
+	// fmt.Printf("segments[hash(%v) >> %d & %d = %d] = %v\n", string(key), self.segmentShift, self.segmentMask, sindex, pseg_)
 	if pseg_ == nil {
-		return nil
+		return nil, 0
 	}
 
 	pseg := (*segment_t)(pseg_)
@@ -124,10 +166,10 @@ func (self *ConcurrentHashMap) Get(key []byte) []byte {
 
 	for pent := (*entry_t)(atomic.LoadPointer(ppent_)); pent != nil; pent = pent.next {
 		if pent.hash == h && bytes.Compare(key, pent.key) == 0 {
-			return pent.value
+			return pent.value, pent.cas
 		}
 	}
-	return nil
+	return nil, 0
 }
 
 func createSegment() *segment_t {
@@ -156,7 +198,7 @@ func ensureSegment(ppseg **segment_t) *segment_t {
 	return (*segment_t)(pseg_)
 }
 
-func (self *ConcurrentHashMap) Put(key []byte, value []byte) []byte {
+func (self *concurrentLruCache) Put(key []byte, value []byte, expire uint32) ([]byte, uint64) {
 	h := hash32(key)
 	sindex := (h >> self.segmentShift) & self.segmentMask
 
@@ -166,14 +208,59 @@ func (self *ConcurrentHashMap) Put(key []byte, value []byte) []byte {
 		pseg_ = unsafe.Pointer(ensureSegment(ppseg))
 	}
 
-	return (*segment_t)(pseg_).put(key, h, value, true)
+	return (*segment_t)(pseg_).put(key, h, value, true), 0
 }
 
-func (self *ConcurrentHashMap) Remove(key []byte, value []byte) []byte {
+func (self *concurrentLruCache) Remove(key []byte) []byte {
 	// TODO
 	return nil
 }
 
-func (self *ConcurrentHashMap) rehash() {
+func (self *concurrentLruCache) rehash() {
 	// TODO
+}
+
+func (self *concurrentLruCache) PutIfAbsent(key []byte, value []byte, expire uint32) []byte {
+	// TODO
+	return nil
+}
+
+func (self *concurrentLruCache) Append(key []byte, value []byte, expire uint32) []byte {
+	// TODO
+	return nil
+}
+
+func (self *concurrentLruCache) Prepend(key []byte, value []byte, expire uint32) []byte {
+	// TODO
+	return nil
+}
+
+func (self *concurrentLruCache) Replace(key []byte, value []byte, expire uint32) (success bool, newcas uint64) {
+	// TODO
+	return false, 0
+}
+
+func (self *concurrentLruCache) Increment(key []byte, initial uint64, incr uint64, expire uint32) []byte {
+	// TODO
+	return nil
+}
+
+func (self *concurrentLruCache) Decrement(key []byte, initial uint64, decr uint64, expire uint32) []byte {
+	// TODO
+	return nil
+}
+
+func (self *concurrentLruCache) CompareAndRemove(key []byte, cas uint64) []byte {
+	// TODO
+	return nil
+}
+
+func (self *concurrentLruCache) CompareAndSet(key []byte, value []byte, cas uint64, expire uint32) ([]byte, uint64) {
+	// TODO
+	return nil, 0
+}
+
+func (self *concurrentLruCache) Clear() {
+	// TODO
+	return
 }

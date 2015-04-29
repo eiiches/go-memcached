@@ -2,7 +2,7 @@ package main
 
 import "os"
 import "fmt"
-import "memcached"
+import "github.com/eiiches/go-memcached/memcached"
 
 func main() {
 	client, err := memcached.NewMemcachedClient("tcp", "localhost:11212")

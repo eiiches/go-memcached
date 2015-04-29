@@ -1,30 +1,46 @@
-.PHONY: rebuild
-rebuild:
-	make clean
-	make all
+.PHONY: all generate install clean
 
-.PHONY: all
-all: memcached memcached-cli
+null :=
 
-flags := -race -x
-sources := $(shell find src -type f -name \*.go) 
-gopath := $(shell pwd):$(shell echo $$GOPATH)
+build_flags := -x
 
-memcached: export GOPATH = $(gopath)
-memcached: $(sources) memcached.go
-	go generate -tags generate -v memcached
-	go build $(flags) -o memcached memcached.go
+targets := \
+	bin/memcached-cli \
+	bin/memcached-server \
+	bin/memcached-bench \
+	$(null)
 
-memcached-cli: export GOPATH = $(gopath)
-memcached-cli: $(sources) memcached-cli.go
-	go generate -tags generate -v memcached
-	go build $(flags) -o memcached-cli memcached-cli.go
+sources := \
+	memcached/client.go \
+	memcached/commands_impl_client.go \
+	memcached/core/atomic.go \
+	memcached/core/lrucache.go \
+	memcached/errors.go \
+	memcached/protocol_binary.go \
+	memcached/server.go \
+	memcached/server_impl.go \
+	$(null)
 
-.PHONY: clean
+templates := \
+	memcached/iface.go.in \
+	memcached/client_protocol_binary.go.in \
+	memcached/server_protocol_binary.go.in \
+	$(null)
+
+generated_sources := $(templates:.go.in=.go)
+
+all: $(targets)
+
+generate: $(generated_sources)
+
+install: $(generated_sources) $(sources)
+	go install github.com/eiiches/go-memcached/memcached
+
 clean:
-	$(RM) src/memcached/iface.go src/memcached/commands.go src/memcached/client_protocol_binary.go src/memcached/server_protocol_binary.go memcached memcached-cli
+	$(RM) $(generated_sources) $(targets)
 
-mix: export GOPATH = $(gopath)
-mix: $(sources) mix.go
-	go generate -tags generate -v memcached
-	go build $(flags) -o mix mix.go
+$(generated_sources): $(templates) memcached/@.go memcached/@.yml
+	go generate -tags generate -v github.com/eiiches/go-memcached/memcached
+
+bin/%: src/%.go
+	go build $(build_flags) -o $@ $<

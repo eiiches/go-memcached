@@ -6,7 +6,7 @@ import "os"
 import "net"
 import "fmt"
 import "sync"
-import "memcached/core"
+import "github.com/eiiches/go-memcached/memcached/core"
 
 type MemcachedServer struct {
 	shutdownRequested core.AtomicBoolean

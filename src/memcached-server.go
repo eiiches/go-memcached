@@ -1,6 +1,6 @@
 package main
 
-import "memcached"
+import "github.com/eiiches/go-memcached/memcached"
 import "fmt"
 import "os"
 import "os/signal"
