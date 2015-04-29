@@ -10,11 +10,16 @@ import "flag"
 
 var (
 	pprofFile string
+	tcpSocket string
+	udsFile   string
 )
 
 func main() {
 	flag.StringVar(&pprofFile, "pprof", "", "write pprof output to file")
+	flag.StringVar(&tcpSocket, "listen-tcp", "localhost:11211", "tcp socket")
+	flag.StringVar(&udsFile, "listen-unix", "/tmp/memcached.sock", "unix domain socket path")
 	flag.Parse()
+
 	if pprofFile != "" {
 		f, err := os.Create(pprofFile)
 		if err != nil {
@@ -28,13 +33,13 @@ func main() {
 
 	server := memcached.NewMemcachedServer()
 
-	if err := server.Listen("tcp", "0.0.0.0:11212"); err != nil {
+	if err := server.Listen("tcp", tcpSocket); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %+v\n", err)
 		server.Shutdown()
 		os.Exit(1)
 	}
 
-	if err := server.Listen("unix", "/tmp/memcached.sock"); err != nil {
+	if err := server.Listen("unix", udsFile); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %+v\n", err)
 		server.Shutdown()
 		os.Exit(1)
